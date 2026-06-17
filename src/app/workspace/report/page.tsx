@@ -1,20 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { ComponentType } from "react";
 import Link from "next/link";
-import { jsPDF } from "jspdf";
 import {
   Area,
   AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis
 } from "recharts";
-import { ArrowLeft, Download, FileText, MapPin, Megaphone, Palette, TrendingUp } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle2, Download, FileText, Gauge, Lightbulb, MapPin, Megaphone, Palette, PieChart as PieChartIcon, Rocket, Target, TrendingUp, Users } from "lucide-react";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/format";
 import { reportStorageKey } from "@/lib/workflow";
 import type { FinalConsultantReport } from "@/lib/types";
@@ -35,36 +39,47 @@ function ScoreCard({ label, value }: { label: string; value: number }) {
   );
 }
 
+const mixColors = ["#153f39", "#b65345", "#c59a45", "#4c7c70", "#7a6f5a", "#2f5f8f"];
+
+function HighlightCard({
+  label,
+  value,
+  icon: Icon,
+  tone = "fern"
+}: {
+  label: string;
+  value: string;
+  icon: ComponentType<{ className?: string }>;
+  tone?: "fern" | "clay" | "brass";
+}) {
+  const toneClass =
+    tone === "clay"
+      ? "border-clay/35 bg-clay/10 text-clay"
+      : tone === "brass"
+        ? "border-brass/40 bg-brass/12 text-brass"
+        : "border-fern/30 bg-mint text-fern";
+
+  return (
+    <div className={`rounded-lg border-2 p-4 ${toneClass}`}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase text-ink/58">{label}</p>
+        <Icon className="h-5 w-5" aria-hidden="true" />
+      </div>
+      <p className="mt-3 text-3xl font-semibold text-ink">{value}</p>
+    </div>
+  );
+}
+
 function BulletList({ items }: { items: string[] }) {
   return (
     <div className="space-y-2">
       {items.map((item) => (
-        <p key={item} className="rounded-md bg-paper px-3 py-2 text-sm leading-5 text-ink/72">
+        <p key={item} className="rounded-md border-l-4 border-fern/35 bg-paper px-3 py-2 text-sm leading-5 text-ink/72">
           {item}
         </p>
       ))}
     </div>
   );
-}
-
-function addSection(doc: jsPDF, title: string, items: string[], yStart: number) {
-  let y = yStart;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text(title, 14, y);
-  y += 7;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  items.forEach((item) => {
-    const lines = doc.splitTextToSize(`- ${item}`, 180);
-    if (y + lines.length * 5 > 282) {
-      doc.addPage();
-      y = 18;
-    }
-    doc.text(lines, 16, y);
-    y += lines.length * 5 + 2;
-  });
-  return y + 4;
 }
 
 export default function ReportPage() {
@@ -81,38 +96,10 @@ export default function ReportPage() {
     return report?.charts.dailySeries.slice(-45).map((point) => ({ ...point, label: point.date.slice(5) })) ?? [];
   }, [report]);
 
+  const showDesignBrief = Boolean(report?.selectedGoals?.includes("Branding/interior design"));
+
   function exportPdf() {
-    if (!report) return;
-    const doc = new jsPDF();
-    let y = 18;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text("BranchWise AI Consultant Report", 14, y);
-    y += 9;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`Generated: ${new Date(report.generatedAt).toLocaleString()} | BranchWise AI output`, 14, y);
-    y += 8;
-    y = addSection(doc, "Executive Summary", [report.executiveSummary, report.inputSummary], y);
-    y = addSection(doc, "Key Insights", report.keyInsights, y);
-    y = addSection(doc, "Problem Diagnosis", report.problemDiagnosis, y);
-    y = addSection(doc, "Quick Wins", report.recommendations.quickWins, y);
-    y = addSection(doc, "Operational Improvements", report.recommendations.operationalImprovements, y);
-    y = addSection(doc, "Strategic Moves", report.recommendations.strategicMoves, y);
-    y = addSection(doc, "Marketing Strategy", [report.marketingStrategy.positioning, ...report.marketingStrategy.campaigns, report.marketingStrategy.loyaltyProgram], y);
-    y = addSection(doc, "Expansion Analysis", [
-      `Expansion score: ${report.expansionAnalysis.expansionReadinessScore}/100`,
-      `Risk level: ${report.expansionAnalysis.riskLevel}`,
-      report.expansionAnalysis.breakEvenEstimation,
-      ...report.expansionAnalysis.recommendedZones.map((zone) => `${zone.district}: ${zone.score}/100 fit, rent ${formatCurrency(zone.estimatedMonthlyRent)}`)
-    ], y);
-    y = addSection(doc, "Action Roadmap", [
-      `0-7 days: ${report.actionPlanRoadmap.now.join("; ")}`,
-      `7-30 days: ${report.actionPlanRoadmap.next30Days.join("; ")}`,
-      `1-3 months: ${report.actionPlanRoadmap.next3Months.join("; ")}`,
-      `3-12 months: ${report.actionPlanRoadmap.next12Months.join("; ")}`
-    ], y);
-    doc.save("branchwise-ai-report.pdf");
+    window.print();
   }
 
   if (!report) {
@@ -131,17 +118,17 @@ export default function ReportPage() {
   }
 
   return (
-    <main className="min-h-screen bg-paper px-4 py-5 text-ink">
+    <main className="report-page min-h-screen bg-paper px-4 py-5 text-ink">
       <div className="mx-auto max-w-7xl">
         <header className="flex flex-col gap-4 rounded-lg border border-ink/10 bg-white p-5 shadow-panel lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase text-clay">Step 3 of 3</p>
             <h1 className="mt-1 text-3xl font-semibold">Final AI Consultant Report</h1>
             <p className="mt-2 text-sm leading-6 text-ink/62">
-              BranchWise AI output · Generated {new Date(report.generatedAt).toLocaleString()}
+              BranchWise AI output | Generated {new Date(report.generatedAt).toLocaleString()}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="no-print flex flex-wrap gap-2">
             <Link href="/workspace/input" className="inline-flex h-11 items-center gap-2 rounded-md border border-ink/12 bg-white px-4 text-sm font-semibold text-ink hover:border-fern">
               <ArrowLeft className="h-4 w-4" />
               New analysis
@@ -171,17 +158,10 @@ export default function ReportPage() {
         </section>
 
         <section className="mt-5 grid gap-5 lg:grid-cols-4">
-          {[
-            ["Total revenue", formatCurrency(report.financialKpis.totalRevenue, { compact: true })],
-            ["Gross margin", formatPercent(report.financialKpis.grossMargin)],
-            ["Net profit", formatCurrency(report.financialKpis.netProfit, { compact: true })],
-            ["Cost ratio", formatPercent(report.financialKpis.costRatio)]
-          ].map(([label, value]) => (
-            <Card key={label}>
-              <p className="text-xs font-semibold uppercase text-ink/50">{label}</p>
-              <p className="mt-2 text-3xl font-semibold">{value}</p>
-            </Card>
-          ))}
+          <HighlightCard label="Total revenue" value={formatCurrency(report.financialKpis.totalRevenue, { compact: true })} icon={TrendingUp} />
+          <HighlightCard label="Expansion risk" value={report.expansionAnalysis.riskLevel} icon={report.expansionAnalysis.riskLevel === "High" ? AlertTriangle : CheckCircle2} tone={report.expansionAnalysis.riskLevel === "High" ? "clay" : "fern"} />
+          <HighlightCard label="Profit uplift" value={formatPercent(report.financialImpactSimulation.expectedProfitIncrease)} icon={Rocket} tone="brass" />
+          <HighlightCard label="Cost ratio" value={formatPercent(report.financialKpis.costRatio)} icon={Gauge} tone={report.financialKpis.costRatio > 0.78 ? "clay" : "fern"} />
         </section>
 
         <section className="mt-5 grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
@@ -225,20 +205,100 @@ export default function ReportPage() {
           </Card>
         </section>
 
+        <section className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+          <Card>
+            <div className="flex items-center gap-2">
+              <PieChartIcon className="h-5 w-5 text-fern" />
+              <h2 className="text-xl font-semibold">Revenue mix</h2>
+            </div>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={report.charts.categoryMix.slice(0, 6)} dataKey="value" nameKey="name" innerRadius={54} outerRadius={82} paddingAngle={2}>
+                      {report.charts.categoryMix.slice(0, 6).map((item, index) => (
+                        <Cell key={item.name} fill={mixColors[index % mixColors.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => formatCurrency(value, { compact: true })} />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={report.charts.channelMix.slice(0, 6)} dataKey="value" nameKey="name" innerRadius={54} outerRadius={82} paddingAngle={2}>
+                      {report.charts.channelMix.slice(0, 6).map((item, index) => (
+                        <Cell key={item.name} fill={mixColors[(index + 2) % mixColors.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => formatCurrency(value, { compact: true })} />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-clay" />
+              <h2 className="text-xl font-semibold">Customer analytics</h2>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <HighlightCard label="AOV" value={formatCurrency(report.customerAnalytics.averageOrderValue)} icon={Users} />
+              <HighlightCard label="Estimated CLV" value={formatCurrency(report.customerAnalytics.estimatedLifetimeValue)} icon={Target} tone="brass" />
+            </div>
+            <p className="mt-4 rounded-md bg-paper p-3 text-sm leading-5 text-ink/70">{report.customerAnalytics.customerFrequency}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {report.customerAnalytics.peakSegments.map((segment) => (
+                <span key={segment} className="rounded-full bg-mint px-3 py-1 text-xs font-semibold text-fern">
+                  {segment}
+                </span>
+              ))}
+            </div>
+          </Card>
+        </section>
+
         <section className="mt-5 grid gap-5 lg:grid-cols-2">
           <Card>
-            <h2 className="text-xl font-semibold">Key insights</h2>
+            <div className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-brass" />
+              <h2 className="text-xl font-semibold">Key insights</h2>
+            </div>
             <div className="mt-4">
               <BulletList items={report.keyInsights} />
             </div>
           </Card>
           <Card>
-            <h2 className="text-xl font-semibold">Problem diagnosis</h2>
+            <div className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-clay" />
+              <h2 className="text-xl font-semibold">Problem diagnosis</h2>
+            </div>
             <div className="mt-4">
               <BulletList items={report.problemDiagnosis} />
             </div>
           </Card>
         </section>
+
+        {report.visibleAnalysisLog?.length ? (
+          <section className="mt-5">
+            <Card className="border-2 border-fern/20 bg-mint/65">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-fern" />
+                <h2 className="text-xl font-semibold">Visible analysis trail</h2>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {report.visibleAnalysisLog.map((item) => (
+                  <p key={item} className="rounded-md bg-white px-3 py-2 text-sm leading-5 text-ink/72">
+                    {item}
+                  </p>
+                ))}
+              </div>
+            </Card>
+          </section>
+        ) : null}
 
         <section className="mt-5 grid gap-5 xl:grid-cols-3">
           <Card>
@@ -308,7 +368,7 @@ export default function ReportPage() {
                     <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-fern">{zone.score}/100</span>
                   </div>
                   <p className="mt-1 text-sm text-ink/62">
-                    Rent {formatCurrency(zone.estimatedMonthlyRent)} · Payback {zone.paybackMonths} months
+                    Rent {formatCurrency(zone.estimatedMonthlyRent)} | Payback {zone.paybackMonths} months
                   </p>
                 </div>
               ))}
@@ -337,32 +397,34 @@ export default function ReportPage() {
           </Card>
         </section>
 
-        <section className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-          <Card className="overflow-hidden p-0">
-            <img
-              src={report.designBrief.imagePath ?? "/branchwise-moodboard.png"}
-              alt="AI generated restaurant moodboard"
-              className="h-full min-h-[330px] w-full object-cover"
-            />
-          </Card>
-          <Card>
-            <div className="flex items-center gap-2">
-              <Palette className="h-5 w-5 text-clay" />
-              <h2 className="text-xl font-semibold">Brand and interior design brief</h2>
-            </div>
-            <p className="mt-3 text-sm leading-6 text-ink/68">{report.designBrief.interiorStyle}</p>
-            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
-              {report.designBrief.palette.map((color) => (
-                <div key={color.hex} className="rounded-md border border-ink/10 bg-paper p-2">
-                  <div className="h-12 rounded" style={{ backgroundColor: color.hex }} />
-                  <p className="mt-2 text-xs font-semibold">{color.name}</p>
-                  <p className="text-xs text-ink/50">{color.hex}</p>
-                </div>
-              ))}
-            </div>
-            <p className="mt-4 rounded-md bg-ink p-3 text-sm leading-5 text-white/78">{report.designBrief.moodboardPrompt}</p>
-          </Card>
-        </section>
+        {showDesignBrief ? (
+          <section className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+            <Card className="overflow-hidden p-0">
+              <img
+                src={report.designBrief.imagePath ?? "/branchwise-moodboard.png"}
+                alt="AI generated restaurant moodboard"
+                className="h-full min-h-[330px] w-full object-cover"
+              />
+            </Card>
+            <Card>
+              <div className="flex items-center gap-2">
+                <Palette className="h-5 w-5 text-clay" />
+                <h2 className="text-xl font-semibold">Brand and interior design brief</h2>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-ink/68">{report.designBrief.interiorStyle}</p>
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+                {report.designBrief.palette.map((color) => (
+                  <div key={color.hex} className="rounded-md border border-ink/10 bg-paper p-2">
+                    <div className="h-12 rounded" style={{ backgroundColor: color.hex }} />
+                    <p className="mt-2 text-xs font-semibold">{color.name}</p>
+                    <p className="text-xs text-ink/50">{color.hex}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 rounded-md bg-ink p-3 text-sm leading-5 text-white/78">{report.designBrief.moodboardPrompt}</p>
+            </Card>
+          </section>
+        ) : null}
 
         <p className="mt-5 text-xs leading-5 text-ink/50">{report.disclaimer}</p>
       </div>

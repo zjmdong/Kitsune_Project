@@ -132,6 +132,7 @@ export function generateSimulatedReport(payload: AnalysisPayload): FinalConsulta
   return {
     mode: payload.mode === "real" ? "real" : "template",
     generatedAt: new Date().toISOString(),
+    selectedGoals: payload.profile.goals,
     inputSummary: `${payload.profile.businessName} is a ${payload.profile.businessSize.toLowerCase()} ${payload.profile.businessType.toLowerCase()} in ${payload.profile.city}, ${payload.profile.area}, targeting ${payload.profile.customerSegments}.`,
     executiveSummary:
       overall >= 75
@@ -234,6 +235,13 @@ export function generateSimulatedReport(payload: AnalysisPayload): FinalConsulta
       next12Months: ["Open second-store pilot.", "Monitor payback and reviews.", "Create franchise-ready operating playbook."]
     },
     designBrief,
+    visibleAnalysisLog: [
+      "Sales records were grouped by date, hour, product, category, and channel.",
+      "Revenue, cost, gross margin, product contribution, and customer signals were converted into KPI cards and charts.",
+      "Expansion readiness was scored from trend strength, rent pressure, profit buffer, and operational capacity.",
+      "Hong Kong location recommendations were ranked with rent, footfall, competition, transit, and target-fit signals.",
+      "Marketing and roadmap recommendations were generated from the owner goals and identified bottlenecks."
+    ],
     charts: {
       dailySeries: analysis.dailySeries,
       hourlySeries: analysis.hourlySeries,
@@ -250,6 +258,7 @@ export function normalizeFinalReport(value: Partial<FinalConsultantReport>, fall
     ...fallback,
     ...value,
     mode: value.mode ?? fallback.mode,
+    selectedGoals: value.selectedGoals ?? fallback.selectedGoals,
     businessHealthScore: { ...fallback.businessHealthScore, ...value.businessHealthScore },
     financialKpis: { ...fallback.financialKpis, ...value.financialKpis },
     operationalKpis: { ...fallback.operationalKpis, ...value.operationalKpis },
@@ -262,6 +271,8 @@ export function normalizeFinalReport(value: Partial<FinalConsultantReport>, fall
     financialImpactSimulation: { ...fallback.financialImpactSimulation, ...value.financialImpactSimulation },
     actionPlanRoadmap: { ...fallback.actionPlanRoadmap, ...value.actionPlanRoadmap },
     designBrief: { ...fallback.designBrief, ...value.designBrief },
+    visibleAnalysisLog: value.visibleAnalysisLog ?? fallback.visibleAnalysisLog,
+    modelDiagnostics: value.modelDiagnostics ?? fallback.modelDiagnostics,
     charts: { ...fallback.charts, ...value.charts }
   };
 }

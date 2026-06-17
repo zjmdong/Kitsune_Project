@@ -24,6 +24,7 @@ body {
     linear-gradient(180deg, rgba(216, 234, 223, 0.55) 0, rgba(251, 251, 248, 0.98) 280px),
     var(--surface);
   color: var(--ink);
+  font-family: var(--font-inter), Inter, "Segoe UI", Arial, sans-serif;
 }
 
 button,
@@ -244,5 +245,31 @@ textarea:focus-visible {
   }
   50% {
     transform: translateY(-12px);
+  }
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #17201d !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .report-page {
+    background: #ffffff !important;
+    padding: 0 !important;
+  }
+
+  .report-page header,
+  .report-page section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report-page .shadow-panel {
+    box-shadow: none !important;
   }
 }

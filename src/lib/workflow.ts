@@ -8,7 +8,8 @@ export const goalOptions: GoalOption[] = [
   "Reduce cost",
   "Expand business",
   "Improve marketing",
-  "Optimize menu/products"
+  "Optimize menu/products",
+  "Branding/interior design"
 ];
 
 export const defaultAiConfig: AiConfig = {

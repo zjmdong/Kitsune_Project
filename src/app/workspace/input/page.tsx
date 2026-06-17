@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Check, Database, FileSpreadsheet, Lock, RefreshCw, Settings2, Upload, X } from "lucide-react";
+import { ArrowRight, BookOpen, Check, Database, FileSpreadsheet, HelpCircle, Lock, RefreshCw, Settings2, ShieldCheck, Upload, X } from "lucide-react";
 import { buildCsvTemplate } from "@/lib/analysis";
 import { parseSalesCsv } from "@/lib/csv";
 import { createSampleSalesRecords } from "@/lib/sample-data";
@@ -11,12 +11,32 @@ import { createDemoTemplate, isBranchWiseDemoTemplate } from "@/lib/demo-templat
 import { createDefaultPayload, defaultAiConfig, goalOptions, payloadStorageKey, reportStorageKey } from "@/lib/workflow";
 import type { AiConfig, AnalysisPayload, FinancialInput, GoalOption, IntakeProfile, UploadedSource } from "@/lib/types";
 
+const agreementStorageKey = "branchwise:user-agreement-v1";
+
 function inputClass() {
   return "h-11 w-full rounded-md border border-ink/12 bg-white px-3 text-sm text-ink shadow-sm transition focus:border-clay";
 }
 
 function labelClass() {
   return "mb-1.5 block text-xs font-semibold uppercase text-ink/55";
+}
+
+function FieldLabel({
+  label,
+  required,
+  help
+}: {
+  label: string;
+  required?: boolean;
+  help?: string;
+}) {
+  return (
+    <span className={`${labelClass()} flex items-center gap-1`} title={help}>
+      <span>{label}</span>
+      {required ? <span className="text-clay">*</span> : null}
+      {help ? <HelpCircle className="h-3.5 w-3.5 text-ink/35" aria-hidden="true" /> : null}
+    </span>
+  );
 }
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -28,21 +48,28 @@ function TextField({
   value,
   onChange,
   type = "text",
-  placeholder
+  placeholder,
+  required,
+  help
 }: {
   label: string;
   value: string | number | undefined;
   onChange: (value: string | number | undefined) => void;
   type?: "text" | "number" | "password";
   placeholder?: string;
+  required?: boolean;
+  help?: string;
 }) {
   return (
     <label className="block">
-      <span className={labelClass()}>{label}</span>
+      <FieldLabel label={label} required={required} help={help} />
       <input
         className={inputClass()}
         type={type}
         placeholder={placeholder}
+        required={required}
+        aria-required={required}
+        title={help}
         value={value ?? ""}
         onChange={(event) => {
           if (type === "number") {
@@ -60,17 +87,21 @@ function SelectField({
   label,
   value,
   options,
-  onChange
+  onChange,
+  required,
+  help
 }: {
   label: string;
   value: string;
   options: string[];
   onChange: (value: string) => void;
+  required?: boolean;
+  help?: string;
 }) {
   return (
     <label className="block">
-      <span className={labelClass()}>{label}</span>
-      <select className={inputClass()} value={value} onChange={(event) => onChange(event.target.value)}>
+      <FieldLabel label={label} required={required} help={help} />
+      <select className={inputClass()} value={value} onChange={(event) => onChange(event.target.value)} required={required} aria-required={required} title={help}>
         {options.map((option) => (
           <option key={option} value={option}>
             {option}
@@ -89,9 +120,15 @@ export default function InputPage() {
   const [titleClicks, setTitleClicks] = useState(0);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [agreementOpen, setAgreementOpen] = useState(true);
+  const [agreementChecked, setAgreementChecked] = useState(false);
 
   const hasTemplateLoaded = payload.mode === "template";
   const configReady = useMemo(() => Boolean(payload.aiConfig?.baseUrl && payload.aiConfig?.model), [payload.aiConfig]);
+
+  useEffect(() => {
+    setAgreementOpen(localStorage.getItem(agreementStorageKey) !== "accepted");
+  }, []);
 
   function updateProfile<K extends keyof IntakeProfile>(key: K, value: IntakeProfile[K]) {
     setPayload((current) => ({
@@ -238,9 +275,29 @@ export default function InputPage() {
     }
   }
 
+  function acceptAgreement() {
+    if (!agreementChecked) return;
+    localStorage.setItem(agreementStorageKey, "accepted");
+    setAgreementOpen(false);
+  }
+
   function startAnalysis() {
-    if (!payload.profile.businessName || !payload.profile.businessType || !payload.profile.city || !payload.profile.area) {
-      setError("Please complete business name, business type, city, and area before analysis.");
+    const missing: string[] = [];
+    if (!payload.profile.businessName.trim()) missing.push("business name");
+    if (!payload.profile.businessType.trim()) missing.push("business type");
+    if (!payload.profile.businessSize) missing.push("business size");
+    if (!payload.profile.city.trim()) missing.push("city");
+    if (!payload.profile.area.trim()) missing.push("area / district");
+    if (!payload.profile.employees || payload.profile.employees <= 0) missing.push("employees");
+    if (!payload.profile.openingHours.trim()) missing.push("opening hours");
+    if (!payload.profile.businessModel) missing.push("business model");
+    if (!payload.salesRecords.length && !payload.financials.monthlyRevenue) missing.push("monthly revenue or sales CSV");
+    if (!payload.salesRecords.length && !payload.financials.rentCost) missing.push("rent cost or sales/cost evidence");
+    if (!payload.salesRecords.length && !payload.financials.laborCost) missing.push("labor cost or sales/cost evidence");
+    if (!payload.salesRecords.length && !payload.financials.ingredientCost) missing.push("ingredient/product cost or sales/cost evidence");
+
+    if (missing.length > 0) {
+      setError(`Please complete required inputs before analysis: ${missing.join(", ")}.`);
       return;
     }
     if (payload.profile.goals.length === 0) {
@@ -288,16 +345,16 @@ export default function InputPage() {
                 <Database className="h-5 w-5 text-fern" aria-hidden="true" />
               </div>
               <div className="mt-5 grid gap-3 md:grid-cols-2">
-                <TextField label="Business name" value={payload.profile.businessName} onChange={(value) => updateProfile("businessName", String(value))} />
-                <SelectField label="Business type" value={payload.profile.businessType} options={["Restaurant", "Cafe", "Retail", "Bakery", "Other"]} onChange={(value) => updateProfile("businessType", value)} />
-                <SelectField label="Business size" value={payload.profile.businessSize} options={["Single store", "Small chain", "Chain"]} onChange={(value) => updateProfile("businessSize", value as IntakeProfile["businessSize"])} />
-                <TextField label="City" value={payload.profile.city} onChange={(value) => updateProfile("city", String(value))} />
-                <TextField label="Area / District" value={payload.profile.area} onChange={(value) => updateProfile("area", String(value))} />
-                <TextField label="Employees" type="number" value={payload.profile.employees || undefined} onChange={(value) => updateProfile("employees", Number(value ?? 0))} />
-                <TextField label="Opening hours" value={payload.profile.openingHours} onChange={(value) => updateProfile("openingHours", String(value))} />
-                <SelectField label="Business model" value={payload.profile.businessModel} options={["Dine-in", "Takeaway", "Hybrid", "Retail"]} onChange={(value) => updateProfile("businessModel", value as IntakeProfile["businessModel"])} />
-                <TextField label="Seating capacity optional" type="number" value={payload.profile.seatingCapacity} onChange={(value) => updateProfile("seatingCapacity", value ? Number(value) : undefined)} />
-                <TextField label="Daily customer count" type="number" value={payload.profile.dailyCustomerCount} onChange={(value) => updateProfile("dailyCustomerCount", value ? Number(value) : undefined)} />
+                <TextField label="Business name" required help="Your store or brand name used in the final report." value={payload.profile.businessName} onChange={(value) => updateProfile("businessName", String(value))} />
+                <SelectField label="Business type" required help="The main category the AI should benchmark against." value={payload.profile.businessType} options={["Restaurant", "Cafe", "Retail", "Bakery", "Other"]} onChange={(value) => updateProfile("businessType", value)} />
+                <SelectField label="Business size" required help="Current operating scale, used for expansion-readiness scoring." value={payload.profile.businessSize} options={["Single store", "Small chain", "Chain"]} onChange={(value) => updateProfile("businessSize", value as IntakeProfile["businessSize"])} />
+                <TextField label="City" required help="Primary market for local assumptions and location advice." value={payload.profile.city} onChange={(value) => updateProfile("city", String(value))} />
+                <TextField label="Area / District" required help="Current store district or target operating area." value={payload.profile.area} onChange={(value) => updateProfile("area", String(value))} />
+                <TextField label="Employees" required help="Total staff count; used for labor efficiency and staffing risk." type="number" value={payload.profile.employees || undefined} onChange={(value) => updateProfile("employees", Number(value ?? 0))} />
+                <TextField label="Opening hours" required help="Daily operating window, for example 11:00-22:00." value={payload.profile.openingHours} onChange={(value) => updateProfile("openingHours", String(value))} />
+                <SelectField label="Business model" required help="Main service model that drives capacity and margin assumptions." value={payload.profile.businessModel} options={["Dine-in", "Takeaway", "Hybrid", "Retail"]} onChange={(value) => updateProfile("businessModel", value as IntakeProfile["businessModel"])} />
+                <TextField label="Seating capacity" help="Optional seat count for table turnover and capacity estimates." type="number" value={payload.profile.seatingCapacity} onChange={(value) => updateProfile("seatingCapacity", value ? Number(value) : undefined)} />
+                <TextField label="Daily customer count" help="Optional average daily customer count; improves AOV and CLV estimates." type="number" value={payload.profile.dailyCustomerCount} onChange={(value) => updateProfile("dailyCustomerCount", value ? Number(value) : undefined)} />
               </div>
             </Card>
 
@@ -305,22 +362,30 @@ export default function InputPage() {
               <p className="text-xs font-semibold uppercase text-ink/50">Manual input</p>
               <h2 className="mt-1 text-xl font-semibold">Financial, Customer, and Goal Inputs</h2>
               <div className="mt-5 grid gap-3 md:grid-cols-3">
-                <TextField label="Monthly revenue" type="number" value={payload.financials.monthlyRevenue} onChange={(value) => updateFinancial("monthlyRevenue", value ? Number(value) : undefined)} />
-                <TextField label="Rent cost" type="number" value={payload.financials.rentCost} onChange={(value) => updateFinancial("rentCost", value ? Number(value) : undefined)} />
-                <TextField label="Labor cost" type="number" value={payload.financials.laborCost} onChange={(value) => updateFinancial("laborCost", value ? Number(value) : undefined)} />
-                <TextField label="Ingredient/product cost" type="number" value={payload.financials.ingredientCost} onChange={(value) => updateFinancial("ingredientCost", value ? Number(value) : undefined)} />
-                <TextField label="Utilities optional" type="number" value={payload.financials.utilitiesCost} onChange={(value) => updateFinancial("utilitiesCost", value ? Number(value) : undefined)} />
-                <TextField label="Gross margin % optional" type="number" value={payload.financials.grossMargin} onChange={(value) => updateFinancial("grossMargin", value ? Number(value) : undefined)} />
-                <TextField label="Peak hours" value={payload.profile.peakHours} onChange={(value) => updateProfile("peakHours", String(value))} />
-                <TextField label="Off-peak hours" value={payload.profile.offPeakHours} onChange={(value) => updateProfile("offPeakHours", String(value))} />
-                <TextField label="Repeat customer rate %" type="number" value={payload.profile.repeatCustomerRate} onChange={(value) => updateProfile("repeatCustomerRate", value ? Number(value) : undefined)} />
+                <TextField label="Monthly revenue" required help="Required if no sales CSV is uploaded; monthly gross sales in HKD." type="number" value={payload.financials.monthlyRevenue} onChange={(value) => updateFinancial("monthlyRevenue", value ? Number(value) : undefined)} />
+                <TextField label="Rent cost" required help="Monthly rent in HKD, used for cost ratio and expansion payback." type="number" value={payload.financials.rentCost} onChange={(value) => updateFinancial("rentCost", value ? Number(value) : undefined)} />
+                <TextField label="Labor cost" required help="Monthly payroll or staffing cost in HKD." type="number" value={payload.financials.laborCost} onChange={(value) => updateFinancial("laborCost", value ? Number(value) : undefined)} />
+                <TextField label="Ingredient/product cost" required help="Monthly COGS in HKD; for restaurants this is food and beverage cost." type="number" value={payload.financials.ingredientCost} onChange={(value) => updateFinancial("ingredientCost", value ? Number(value) : undefined)} />
+                <TextField label="Daily revenue" help="Optional average daily gross sales in HKD." type="number" value={payload.financials.dailyRevenue} onChange={(value) => updateFinancial("dailyRevenue", value ? Number(value) : undefined)} />
+                <TextField label="Morning revenue" help="Optional monthly or representative morning sales in HKD." type="number" value={payload.financials.morningRevenue} onChange={(value) => updateFinancial("morningRevenue", value ? Number(value) : undefined)} />
+                <TextField label="Lunch revenue" help="Optional lunch-period revenue used to find peak demand and pricing opportunities." type="number" value={payload.financials.lunchRevenue} onChange={(value) => updateFinancial("lunchRevenue", value ? Number(value) : undefined)} />
+                <TextField label="Dinner revenue" help="Optional dinner-period revenue used to compare time-based demand." type="number" value={payload.financials.dinnerRevenue} onChange={(value) => updateFinancial("dinnerRevenue", value ? Number(value) : undefined)} />
+                <TextField label="Utilities" help="Optional monthly utilities and overhead cost in HKD." type="number" value={payload.financials.utilitiesCost} onChange={(value) => updateFinancial("utilitiesCost", value ? Number(value) : undefined)} />
+                <TextField label="Net profit" help="Optional monthly net profit if already known." type="number" value={payload.financials.netProfit} onChange={(value) => updateFinancial("netProfit", value ? Number(value) : undefined)} />
+                <TextField label="Gross margin %" help="Optional owner-provided gross margin percentage." type="number" value={payload.financials.grossMargin} onChange={(value) => updateFinancial("grossMargin", value ? Number(value) : undefined)} />
+                <TextField label="Waste rate %" help="Optional waste or unsold-stock percentage for profit leakage analysis." type="number" value={payload.financials.wasteRate} onChange={(value) => updateFinancial("wasteRate", value ? Number(value) : undefined)} />
+                <TextField label="Peak hours" help="Optional busy time windows, for example 12:00-14:00, 19:00-21:00." value={payload.profile.peakHours} onChange={(value) => updateProfile("peakHours", String(value))} />
+                <TextField label="Off-peak hours" help="Optional slow periods where promotions or staff optimization may help." value={payload.profile.offPeakHours} onChange={(value) => updateProfile("offPeakHours", String(value))} />
+                <TextField label="Repeat customer rate %" help="Optional estimated repeat customer share." type="number" value={payload.profile.repeatCustomerRate} onChange={(value) => updateProfile("repeatCustomerRate", value ? Number(value) : undefined)} />
               </div>
               <div className="mt-3 grid gap-3 md:grid-cols-2">
-                <TextField label="Customer segments" value={payload.profile.customerSegments} onChange={(value) => updateProfile("customerSegments", String(value))} />
-                <TextField label="Marketing channels optional" value={payload.profile.marketingChannels} onChange={(value) => updateProfile("marketingChannels", String(value))} />
+                <TextField label="Average spend per customer" help="Optional average order value in HKD." type="number" value={payload.profile.averageSpendPerCustomer} onChange={(value) => updateProfile("averageSpendPerCustomer", value ? Number(value) : undefined)} />
+                <TextField label="Customer segments" help="Target customer groups, for example office workers, families, tourists." value={payload.profile.customerSegments} onChange={(value) => updateProfile("customerSegments", String(value))} />
+                <TextField label="Marketing channels" help="Optional current channels such as Instagram, TikTok, Google Maps, or flyers." value={payload.profile.marketingChannels} onChange={(value) => updateProfile("marketingChannels", String(value))} />
+                <TextField label="Overstock / unsold issues" help="Optional note about slow-moving inventory, waste, or unsold products." value={payload.financials.overstockIssues} onChange={(value) => updateFinancial("overstockIssues", String(value))} />
               </div>
               <div className="mt-5">
-                <p className={labelClass()}>Business goals</p>
+                <FieldLabel label="Business goals" required help="Select every objective the report should optimize for. Design output appears only when branding/interior design is selected." />
                 <div className="flex flex-wrap gap-2">
                   {goalOptions.map((goal) => {
                     const active = payload.profile.goals.includes(goal);
@@ -353,13 +418,14 @@ export default function InputPage() {
                 <FileSpreadsheet className="h-5 w-5 text-clay" aria-hidden="true" />
               </div>
               <p className="mt-3 text-sm leading-6 text-ink/62">
-                Sales CSV is the most important upload. Product, cost, inventory, and marketing files are optional context.
+                Sales CSV is the most important upload. If you do not upload sales data, complete the required financial fields marked with <span className="font-semibold text-clay">*</span>.
               </p>
               <div className="mt-5 space-y-3">
                 <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-ink/10 bg-paper p-3 text-sm font-semibold text-ink transition hover:border-fern">
                   <span className="inline-flex items-center gap-2">
                     <Upload className="h-4 w-4 text-fern" />
                     Upload sales CSV
+                    {!payload.financials.monthlyRevenue ? <span className="text-clay">*</span> : null}
                   </span>
                   <input
                     className="sr-only"
@@ -402,10 +468,11 @@ export default function InputPage() {
               <p className="text-xs font-semibold uppercase text-ink/50">Input coverage</p>
               <h2 className="mt-1 text-xl font-semibold">Required vs Optional</h2>
               <div className="mt-4 space-y-3 text-sm leading-6 text-ink/68">
-                <p><strong className="text-ink">Required manual:</strong> profile, location, operating model, goals.</p>
-                <p><strong className="text-ink">Recommended upload:</strong> sales/product CSV for KPI accuracy.</p>
-                <p><strong className="text-ink">Optional manual:</strong> gross margin, utilities, seating, repeat rate, waste.</p>
-                <p><strong className="text-ink">Optional upload:</strong> inventory, marketing, cost files for richer diagnosis.</p>
+                <p><span className="font-semibold text-clay">*</span> means required for a reliable real analysis.</p>
+                <p><strong className="text-ink">Required manual:</strong> business profile, location, staff count, operating model, and goals.</p>
+                <p><strong className="text-ink">Required evidence:</strong> sales CSV or the core monthly revenue/cost fields.</p>
+                <p><strong className="text-ink">Optional manual:</strong> gross margin, utilities, seating, peak hours, repeat rate, customer segments.</p>
+                <p><strong className="text-ink">Optional upload:</strong> product, inventory, marketing, and cost files for richer context.</p>
               </div>
             </Card>
           </aside>
@@ -462,6 +529,88 @@ export default function InputPage() {
           </button>
         </div>
       </div>
+
+      {agreementOpen ? (
+        <div className="fixed inset-0 z-40 overflow-y-auto bg-ink/82 px-4 py-6 backdrop-blur-md">
+          <div className="mx-auto max-w-4xl rounded-lg border border-white/14 bg-pearl p-5 text-ink shadow-panel sm:p-7">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase text-clay">Before using BranchWise AI</p>
+                <h2 className="mt-2 text-3xl font-semibold">Use Agreement and Quick Guide</h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-ink/64">
+                  Please review how this demo analyzes your business data before entering the workspace.
+                </p>
+              </div>
+              <ShieldCheck className="h-9 w-9 text-fern" aria-hidden="true" />
+            </div>
+
+            <div className="mt-6 grid gap-4 lg:grid-cols-2">
+              <section className="rounded-lg border border-ink/10 bg-white p-4">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-clay" aria-hidden="true" />
+                  <h3 className="font-semibold">How to use the system</h3>
+                </div>
+                <div className="mt-3 space-y-2 text-sm leading-6 text-ink/68">
+                  <p>1. Complete the required fields marked with <span className="font-semibold text-clay">*</span>.</p>
+                  <p>2. Upload sales CSV if available, plus optional product, cost, inventory, or marketing files.</p>
+                  <p>3. Click Start Analysis. The system calls the configured LLM, validates the output, then opens the report.</p>
+                  <p>4. Review KPI charts, expansion advice, marketing actions, roadmap, and export the report as PDF.</p>
+                </div>
+              </section>
+
+              <section className="rounded-lg border border-ink/10 bg-white p-4">
+                <h3 className="font-semibold">What BranchWise AI does</h3>
+                <div className="mt-3 space-y-2 text-sm leading-6 text-ink/68">
+                  <p>It analyzes sales, cost, customer, product, and location evidence for SME restaurants and retailers.</p>
+                  <p>It produces business health scoring, KPI charts, diagnosis, recommendations, Hong Kong expansion zones, marketing plans, and a 90-day roadmap.</p>
+                  <p>Branding and interior design advice is generated only when you select that goal.</p>
+                </div>
+              </section>
+
+              <section className="rounded-lg border border-ink/10 bg-white p-4">
+                <h3 className="font-semibold">Data security and privacy</h3>
+                <div className="mt-3 space-y-2 text-sm leading-6 text-ink/68">
+                  <p>Data is transmitted to the configured model endpoint over HTTPS/TLS when real LLM mode is used.</p>
+                  <p>The demo server does not persist uploaded business payloads to a database. Browser-stored input payloads are removed after the report is generated.</p>
+                  <p>Reports remain in local browser storage so you can export them, and can be cleared by starting a new analysis or clearing browser storage.</p>
+                </div>
+              </section>
+
+              <section className="rounded-lg border border-ink/10 bg-white p-4">
+                <h3 className="font-semibold">Terms and limitations</h3>
+                <div className="mt-3 space-y-2 text-sm leading-6 text-ink/68">
+                  <p>This is a demo-level business intelligence system for pitch and planning use.</p>
+                  <p>It is not legal, accounting, tax, licensing, real-estate, or investment advice.</p>
+                  <p>You are responsible for ensuring you have permission to upload any business files used for analysis.</p>
+                </div>
+              </section>
+            </div>
+
+            <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-lg border border-ink/10 bg-white p-4 text-sm leading-6 text-ink/72">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 accent-fern"
+                checked={agreementChecked}
+                onChange={(event) => setAgreementChecked(event.target.checked)}
+              />
+              <span>
+                I have read and agree to the use agreement, data handling notice, and demo limitations.
+              </span>
+            </label>
+
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                disabled={!agreementChecked}
+                onClick={acceptAgreement}
+                className="inline-flex h-11 items-center justify-center rounded-md bg-fern px-5 text-sm font-semibold text-white transition hover:bg-ink disabled:cursor-not-allowed disabled:bg-ink/25"
+              >
+                Agree and enter workspace
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {templateDialogOpen ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-ink/55 px-4 backdrop-blur-sm">

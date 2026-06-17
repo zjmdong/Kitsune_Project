@@ -126,7 +126,8 @@ export type GoalOption =
   | "Reduce cost"
   | "Expand business"
   | "Improve marketing"
-  | "Optimize menu/products";
+  | "Optimize menu/products"
+  | "Branding/interior design";
 
 export type AiConfig = {
   provider: string;
@@ -210,6 +211,7 @@ export type ScoreBreakdown = {
 export type FinalConsultantReport = {
   mode: AnalysisMode;
   generatedAt: string;
+  selectedGoals?: GoalOption[];
   inputSummary: string;
   executiveSummary: string;
   businessHealthScore: ScoreBreakdown;
@@ -277,6 +279,14 @@ export type FinalConsultantReport = {
     next12Months: string[];
   };
   designBrief: DesignBrief;
+  visibleAnalysisLog?: string[];
+  modelDiagnostics?: {
+    promptVersion: string;
+    provider: string;
+    model: string;
+    workflow: string[];
+    rawReasoningHidden?: boolean;
+  };
   charts: {
     dailySeries: TimeSeriesPoint[];
     hourlySeries: { hour: string; revenue: number }[];

@@ -79,7 +79,7 @@ export function createDemoTemplate(): BranchWiseDemoTemplate {
       averageSpendPerCustomer: sampleProfile.averageTicket,
       customerSegments: sampleProfile.targetCustomer,
       marketingChannels: "Instagram, TikTok, Google Maps, office lunch traffic",
-      goals: ["Expand business", "Increase revenue", "Improve marketing"]
+      goals: ["Expand business", "Increase revenue", "Improve marketing", "Branding/interior design"]
     },
     financials: {
       monthlyRevenue: 780000,
