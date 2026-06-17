@@ -5,7 +5,7 @@ A deployable Next.js demo for an AI business analyst platform serving Hong Kong 
 ## Experience Flow
 
 - `/` - landing page with brand vision, hero image, and Try Now entry point.
-- `/workspace/input` - business intake page with manual inputs, file uploads, simulation/real LLM mode switch, and model API configuration.
+- `/workspace/input` - business intake page with manual inputs, file uploads, default real LLM mode, hidden template loader, and advanced model configuration.
 - `/workspace/loading` - AI work page with staged progress, visible analysis log, and automatic redirect.
 - `/workspace/report` - final consultant report with KPIs, diagnosis, recommendations, marketing strategy, expansion analysis, roadmap, and PDF export.
 
@@ -18,18 +18,21 @@ pnpm dev
 
 Open `http://localhost:3000`.
 
-## Optional live AI
+## LLM Configuration
 
-The demo works without an API key in Simulation Mode. Real LLM Mode is configured from the input page with an OpenAI-compatible base URL, model, and API key.
-
-For server-side defaults, you can also set:
+The default user flow uses Real LLM Mode. Local defaults are read from `.env.local`:
 
 ```bash
-AI_API_KEY=your_key
-AI_MODEL=your_preferred_model
+BRANCHWISE_AI_ENDPOINT=https://opencode.ai/zen/go/v1/chat/completions
+BRANCHWISE_AI_MODEL=deepseek-v4-flash
+BRANCHWISE_AI_API_KEY=your_key
 ```
 
-Simulation Mode uses the deterministic local computation engine. Real LLM Mode requires the configured model API to return the final report.
+The input page has a small `Advanced` control at the bottom for changing endpoint/model/key during a demo.
+
+## Hidden Demo Template
+
+For pitch rehearsal, click the `Business Input Workspace` title five times to open the internal template loader. Uploading a BranchWise template fills the form, loads demo evidence rows, controls the loading-page thought process, and renders a preset report. Normal users never see a simulation toggle.
 
 ## CSV format
 

@@ -5,61 +5,122 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Bot, BrainCircuit, CheckCircle2, Loader2 } from "lucide-react";
 import { isPayload, payloadStorageKey, reportStorageKey } from "@/lib/workflow";
-import type { AnalysisPayload, FinalConsultantReport } from "@/lib/types";
+import type { AnalysisPayload, FinalConsultantReport, LoadingStep } from "@/lib/types";
 
-const phases = [
-  { at: 5, label: "Validating business profile", note: "Checking required business context, goals, and location inputs." },
-  { at: 18, label: "Reading uploaded evidence", note: "Parsing sales rows and mapping optional cost, product, and inventory files." },
-  { at: 36, label: "Calculating core KPIs", note: "Preparing revenue, profit, cost, product, customer, and operational metrics." },
-  { at: 56, label: "Running consulting logic", note: "Looking for trend shifts, bottlenecks, profit leakage, and benchmark gaps." },
-  { at: 76, label: "Simulating expansion scenarios", note: "Scoring expansion readiness, risk, location fit, break-even, and ROI." },
-  { at: 92, label: "Generating final report", note: "Structuring executive summary, recommendations, roadmap, and marketing strategy." }
+const realPhases: LoadingStep[] = [
+  { progress: 7, stage: "Validating business profile", thought: "Checking required business context, goals, and location inputs." },
+  { progress: 18, stage: "Preparing uploaded evidence", thought: "Normalizing manual inputs and uploaded sales/product files for the model." },
+  { progress: 34, stage: "Calling configured LLM", thought: "Sending the business payload to the configured model endpoint for full analysis." },
+  { progress: 58, stage: "Waiting for AI consultant output", thought: "The model is calculating KPIs, diagnosis, recommendations, and expansion scenarios." },
+  { progress: 82, stage: "Validating report structure", thought: "Checking the report shape so charts, scores, and PDF export can render correctly." },
+  { progress: 96, stage: "Finalizing report", thought: "Preparing the final consultant report page." }
 ];
+
+function wait(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
 
 export default function LoadingPage() {
   const router = useRouter();
   const [payload, setPayload] = useState<AnalysisPayload | null>(null);
   const [progress, setProgress] = useState(0);
-  const [activeNote, setActiveNote] = useState(phases[0].note);
-  const [logs, setLogs] = useState<string[]>([phases[0].note]);
+  const [activeStage, setActiveStage] = useState(realPhases[0].stage);
+  const [activeThought, setActiveThought] = useState(realPhases[0].thought);
+  const [logs, setLogs] = useState<string[]>([realPhases[0].thought]);
   const [error, setError] = useState("");
   const reportReady = useRef(false);
 
-  const currentPhase = useMemo(() => {
-    return phases.reduce((current, phase) => (progress >= phase.at ? phase : current), phases[0]);
-  }, [progress]);
+  const modeLabel = useMemo(() => {
+    if (!payload) return "Preparing analysis";
+    return payload.mode === "template" ? "Analysis workflow" : "LLM analysis";
+  }, [payload]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("template") === "branchwise") {
+      void fetch("/api/demo-template")
+        .then((response) => response.json())
+        .then((template: { payload?: AnalysisPayload }) => {
+          if (template.payload && isPayload(template.payload)) {
+            setPayload(template.payload);
+          } else {
+            setError("Demo template could not be loaded.");
+          }
+        })
+        .catch(() => setError("Demo template could not be loaded."));
+      return;
+    }
+
     const raw = localStorage.getItem(payloadStorageKey);
     if (!raw) {
       setError("No analysis input found. Please return to the input page.");
       return;
     }
-    const parsed = JSON.parse(raw) as unknown;
-    if (!isPayload(parsed)) {
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (!isPayload(parsed)) {
+        setError("Analysis input is invalid. Please rebuild the input form.");
+        return;
+      }
+      setPayload(parsed);
+    } catch {
       setError("Analysis input is invalid. Please rebuild the input form.");
-      return;
     }
-    setPayload(parsed);
   }, []);
 
   useEffect(() => {
     if (!payload) return;
-
+    const activePayload = payload;
     let mounted = true;
-    const startedAt = Date.now();
-    const timer = window.setInterval(() => {
-      const elapsed = Date.now() - startedAt;
-      const next = Math.min(98, Math.round(elapsed / 95));
-      setProgress((current) => Math.max(current, next));
-    }, 220);
+    let timer: number | undefined;
 
-    async function runAnalysis() {
+    function applyStep(step: LoadingStep) {
+      if (!mounted) return;
+      setProgress(step.progress);
+      setActiveStage(step.stage);
+      setActiveThought(step.thought);
+      setLogs((current) => (current.includes(step.thought) ? current : [...current, step.thought]));
+    }
+
+    async function runTemplateWorkflow() {
+      const script = activePayload.loadingScript?.length ? activePayload.loadingScript : realPhases;
+      for (const step of script) {
+        applyStep(step);
+        await wait(step.durationMs ?? 850);
+      }
+
+      if (!activePayload.templateReport) {
+        if (mounted) setError("Template report is missing from the uploaded template.");
+        return;
+      }
+
+      localStorage.setItem(reportStorageKey, JSON.stringify(activePayload.templateReport));
+      reportReady.current = true;
+      if (mounted) {
+        setProgress(100);
+        window.setTimeout(() => router.push("/workspace/report"), 550);
+      }
+    }
+
+    async function runRealWorkflow() {
+      const startedAt = Date.now();
+      timer = window.setInterval(() => {
+        const elapsed = Date.now() - startedAt;
+        const syntheticProgress = Math.min(95, Math.round(elapsed / 120));
+        const phase = realPhases.reduce((current, item) => (syntheticProgress >= item.progress ? item : current), realPhases[0]);
+        if (mounted) {
+          setProgress((current) => Math.max(current, syntheticProgress));
+          setActiveStage(phase.stage);
+          setActiveThought(phase.thought);
+          setLogs((current) => (current.includes(phase.thought) ? current : [...current, phase.thought]));
+        }
+      }, 250);
+
       try {
         const response = await fetch("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(activePayload)
         });
 
         if (!response.ok) {
@@ -72,29 +133,30 @@ export default function LoadingPage() {
         reportReady.current = true;
         if (mounted) {
           setProgress(100);
-          setTimeout(() => router.push("/workspace/report"), 650);
+          setActiveStage("Report ready");
+          setActiveThought("The report is ready. Opening the final consultant report page.");
+          setLogs((current) => [...current, "The report is ready. Opening the final consultant report page."]);
+          window.setTimeout(() => router.push("/workspace/report"), 550);
         }
       } catch (event) {
         const message = event instanceof Error ? event.message : "Analysis failed.";
         if (mounted) setError(message);
       } finally {
-        window.clearInterval(timer);
+        if (timer) window.clearInterval(timer);
       }
     }
 
-    void runAnalysis();
+    if (activePayload.mode === "template") {
+      void runTemplateWorkflow();
+    } else {
+      void runRealWorkflow();
+    }
 
     return () => {
       mounted = false;
-      window.clearInterval(timer);
+      if (timer) window.clearInterval(timer);
     };
   }, [payload, router]);
-
-  useEffect(() => {
-    const phase = phases.reduce((current, item) => (progress >= item.at ? item : current), phases[0]);
-    setActiveNote(phase.note);
-    setLogs((current) => (current.includes(phase.note) ? current : [...current, phase.note]));
-  }, [progress]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-ink px-4 py-8 text-white">
@@ -103,16 +165,14 @@ export default function LoadingPage() {
           <div>
             <p className="text-sm font-semibold uppercase text-brass">Step 2 of 3</p>
             <h1 className="mt-1 text-3xl font-semibold">AI Analysis Workspace</h1>
-            <p className="mt-2 text-sm leading-6 text-white/68">
-              Mode: {payload?.mode === "real" ? "Real LLM Mode" : "Simulation Mode"} · The report will open automatically when complete.
-            </p>
+            <p className="mt-2 text-sm leading-6 text-white/68">{modeLabel} is processing. The report will open automatically when complete.</p>
           </div>
           {error ? <AlertTriangle className="h-9 w-9 text-clay" /> : reportReady.current ? <CheckCircle2 className="h-9 w-9 text-mint" /> : <Loader2 className="h-9 w-9 animate-spin text-brass" />}
         </div>
 
         <div className="mt-8">
           <div className="flex items-center justify-between text-sm">
-            <span className="font-semibold">{currentPhase.label}</span>
+            <span className="font-semibold">{activeStage}</span>
             <span className="text-white/68">{progress}%</span>
           </div>
           <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/12">
@@ -120,7 +180,7 @@ export default function LoadingPage() {
           </div>
           <p className="mt-4 rounded-md bg-white/10 p-3 text-sm leading-6 text-white/76">
             <BrainCircuit className="mr-2 inline h-4 w-4 text-brass" aria-hidden="true" />
-            {activeNote}
+            {activeThought}
           </p>
         </div>
 

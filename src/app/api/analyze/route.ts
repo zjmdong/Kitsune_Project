@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { generateSimulatedReport, normalizeFinalReport } from "@/lib/simulation";
 import type { AnalysisPayload, FinalConsultantReport } from "@/lib/types";
 
+const defaultEndpoint = "https://opencode.ai/zen/go/v1/chat/completions";
+const defaultModel = "deepseek-v4-flash";
+
 function extractJson(text: string) {
   const fenced = text.match(/```json\s*([\s\S]*?)\s*```/i);
   if (fenced?.[1]) {
@@ -32,16 +35,18 @@ function compactPayload(payload: AnalysisPayload) {
 
 async function runRealModel(payload: AnalysisPayload) {
   const config = payload.aiConfig;
-  if (!config?.apiKey) {
+  const apiKey = config?.apiKey || process.env.BRANCHWISE_AI_API_KEY || process.env.AI_API_KEY;
+  const endpoint = config?.baseUrl || process.env.BRANCHWISE_AI_ENDPOINT || defaultEndpoint;
+  const model = config?.model || process.env.BRANCHWISE_AI_MODEL || defaultModel;
+
+  if (!apiKey) {
     return NextResponse.json(
-      { error: "Real mode requires an API key. Switch to Simulation Mode or configure the model API." },
+      { error: "Real LLM mode requires an API key. Configure it in local .env.local or the advanced settings panel." },
       { status: 400 }
     );
   }
 
-  const fallbackShape = generateSimulatedReport({ ...payload, mode: "simulation" });
-  const baseUrl = (config.baseUrl || "https://api.openai.com/v1").replace(/\/$/, "");
-  const model = config.model || "gpt-4.1-mini";
+  const fallbackShape = generateSimulatedReport({ ...payload, mode: "real" });
   const prompt = `You are BranchWise AI, a business analyst for Hong Kong SME restaurant and retail owners.
 Use the user's uploaded and manual inputs to compute every KPI and generate the final consultant report.
 Return only valid JSON matching this exact structure. Do not include markdown.
@@ -68,15 +73,25 @@ User payload:
 ${JSON.stringify(compactPayload(payload), null, 2)}`;
 
   try {
-    const response = await fetch(`${baseUrl}/responses`, {
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${config.apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
         model,
-        input: prompt,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are BranchWise AI. Return only valid JSON for the requested report. No markdown, no commentary, no code fences."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
         temperature: 0.2
       })
     });
@@ -89,9 +104,18 @@ ${JSON.stringify(compactPayload(payload), null, 2)}`;
     const data = (await response.json()) as {
       output_text?: string;
       output?: Array<{ content?: Array<{ text?: string }> }>;
+      choices?: Array<{ message?: { content?: string | Array<{ text?: string; type?: string }> }; text?: string }>;
     };
     const text =
       data.output_text ??
+      data.choices
+        ?.map((choice) => {
+          const content = choice.message?.content;
+          if (typeof content === "string") return content;
+          if (Array.isArray(content)) return content.map((item) => item.text ?? "").join("\n");
+          return choice.text ?? "";
+        })
+        .join("\n") ??
       data.output?.flatMap((item) => item.content ?? []).map((content) => content.text ?? "").join("\n") ??
       "";
     const parsed = JSON.parse(extractJson(text)) as Partial<FinalConsultantReport>;

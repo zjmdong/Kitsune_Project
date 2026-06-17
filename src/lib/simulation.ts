@@ -130,7 +130,7 @@ export function generateSimulatedReport(payload: AnalysisPayload): FinalConsulta
   const overall = Math.round(revenueScore * 0.3 + costScore * 0.32 + growthScore * 0.38);
 
   return {
-    mode: "simulation",
+    mode: payload.mode === "real" ? "real" : "template",
     generatedAt: new Date().toISOString(),
     inputSummary: `${payload.profile.businessName} is a ${payload.profile.businessSize.toLowerCase()} ${payload.profile.businessType.toLowerCase()} in ${payload.profile.city}, ${payload.profile.area}, targeting ${payload.profile.customerSegments}.`,
     executiveSummary:

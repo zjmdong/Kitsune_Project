@@ -91,7 +91,7 @@ export default function ReportPage() {
     y += 9;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text(`Mode: ${report.mode} | Generated: ${new Date(report.generatedAt).toLocaleString()}`, 14, y);
+    doc.text(`Generated: ${new Date(report.generatedAt).toLocaleString()} | BranchWise AI output`, 14, y);
     y += 8;
     y = addSection(doc, "Executive Summary", [report.executiveSummary, report.inputSummary], y);
     y = addSection(doc, "Key Insights", report.keyInsights, y);
@@ -138,7 +138,7 @@ export default function ReportPage() {
             <p className="text-sm font-semibold uppercase text-clay">Step 3 of 3</p>
             <h1 className="mt-1 text-3xl font-semibold">Final AI Consultant Report</h1>
             <p className="mt-2 text-sm leading-6 text-ink/62">
-              Mode: {report.mode === "real" ? "Real LLM Mode" : "Simulation Mode"} · Generated {new Date(report.generatedAt).toLocaleString()}
+              BranchWise AI output · Generated {new Date(report.generatedAt).toLocaleString()}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

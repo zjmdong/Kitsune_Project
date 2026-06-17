@@ -118,7 +118,7 @@ export type ConsultantReport = {
   disclaimer: string;
 };
 
-export type AnalysisMode = "simulation" | "real";
+export type AnalysisMode = "real" | "template";
 
 export type GoalOption =
   | "Increase revenue"
@@ -184,6 +184,15 @@ export type AnalysisPayload = {
   salesRecords: SalesRecord[];
   uploadedSources: UploadedSource[];
   aiConfig?: AiConfig;
+  templateReport?: FinalConsultantReport;
+  loadingScript?: LoadingStep[];
+};
+
+export type LoadingStep = {
+  progress: number;
+  stage: string;
+  thought: string;
+  durationMs?: number;
 };
 
 export type ScoreBreakdown = {
