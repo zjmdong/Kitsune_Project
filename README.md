@@ -2,6 +2,13 @@
 
 A deployable Next.js demo for an AI business analyst platform serving Hong Kong SME restaurant and retail owners.
 
+## Experience Flow
+
+- `/` - landing page with brand vision, hero image, and Try Now entry point.
+- `/workspace/input` - business intake page with manual inputs, file uploads, simulation/real LLM mode switch, and model API configuration.
+- `/workspace/loading` - AI work page with staged progress, visible analysis log, and automatic redirect.
+- `/workspace/report` - final consultant report with KPIs, diagnosis, recommendations, marketing strategy, expansion analysis, roadmap, and PDF export.
+
 ## Run locally
 
 ```bash
@@ -13,14 +20,16 @@ Open `http://localhost:3000`.
 
 ## Optional live AI
 
-The demo works without an API key. To enable live report generation, set:
+The demo works without an API key in Simulation Mode. Real LLM Mode is configured from the input page with an OpenAI-compatible base URL, model, and API key.
+
+For server-side defaults, you can also set:
 
 ```bash
 AI_API_KEY=your_key
 AI_MODEL=your_preferred_model
 ```
 
-If the live call fails or no key is configured, the API returns the deterministic demo report.
+Simulation Mode uses the deterministic local computation engine. Real LLM Mode requires the configured model API to return the final report.
 
 ## CSV format
 

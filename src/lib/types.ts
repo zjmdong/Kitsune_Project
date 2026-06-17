@@ -117,3 +117,157 @@ export type ConsultantReport = {
   designBrief: DesignBrief;
   disclaimer: string;
 };
+
+export type AnalysisMode = "simulation" | "real";
+
+export type GoalOption =
+  | "Increase revenue"
+  | "Reduce cost"
+  | "Expand business"
+  | "Improve marketing"
+  | "Optimize menu/products";
+
+export type AiConfig = {
+  provider: string;
+  baseUrl: string;
+  model: string;
+  apiKey?: string;
+};
+
+export type IntakeProfile = {
+  businessName: string;
+  businessType: string;
+  businessSize: "Single store" | "Small chain" | "Chain";
+  city: string;
+  area: string;
+  employees: number;
+  openingHours: string;
+  businessModel: "Dine-in" | "Takeaway" | "Hybrid" | "Retail";
+  seatingCapacity?: number;
+  peakHours: string;
+  offPeakHours: string;
+  dailyCustomerCount?: number;
+  repeatCustomerRate?: number;
+  averageSpendPerCustomer?: number;
+  customerSegments: string;
+  marketingChannels: string;
+  goals: GoalOption[];
+};
+
+export type FinancialInput = {
+  dailyRevenue?: number;
+  monthlyRevenue?: number;
+  morningRevenue?: number;
+  lunchRevenue?: number;
+  dinnerRevenue?: number;
+  rentCost?: number;
+  laborCost?: number;
+  ingredientCost?: number;
+  utilitiesCost?: number;
+  netProfit?: number;
+  grossMargin?: number;
+  wasteRate?: number;
+  overstockIssues?: string;
+};
+
+export type UploadedSource = {
+  kind: "sales" | "product" | "cost" | "inventory" | "marketing" | "other";
+  name: string;
+  rowCount?: number;
+  notes?: string;
+};
+
+export type AnalysisPayload = {
+  mode: AnalysisMode;
+  profile: IntakeProfile;
+  financials: FinancialInput;
+  salesRecords: SalesRecord[];
+  uploadedSources: UploadedSource[];
+  aiConfig?: AiConfig;
+};
+
+export type ScoreBreakdown = {
+  overall: number;
+  revenue: number;
+  costEfficiency: number;
+  growthPotential: number;
+};
+
+export type FinalConsultantReport = {
+  mode: AnalysisMode;
+  generatedAt: string;
+  inputSummary: string;
+  executiveSummary: string;
+  businessHealthScore: ScoreBreakdown;
+  financialKpis: {
+    totalRevenue: number;
+    revenuePerDay: number;
+    revenuePerHour: number;
+    revenueGrowthRate: number;
+    netProfit: number;
+    grossMargin: number;
+    costRatio: number;
+    laborCostEfficiency: number;
+    ingredientCostPerSale: number;
+    profitPerCustomer: number;
+  };
+  operationalKpis: {
+    peakHourEfficiency: string;
+    staffUtilizationRate: number;
+    tableTurnoverRate: number;
+    inventoryTurnoverRate: number;
+  };
+  productPerformance: {
+    topByRevenue: RankedItem[];
+    topByProfit: RankedItem[];
+    lowMarginProducts: RankedItem[];
+    contributionNotes: string[];
+  };
+  customerAnalytics: {
+    averageOrderValue: number;
+    customerFrequency: string;
+    peakSegments: string[];
+    estimatedLifetimeValue: number;
+  };
+  consultingAnalysis: {
+    trendAnalysis: string;
+    bottleneckAnalysis: string[];
+    profitLeakageAnalysis: string[];
+    benchmarking: string[];
+    scenarioSimulation: string[];
+  };
+  keyInsights: string[];
+  problemDiagnosis: string[];
+  recommendations: {
+    quickWins: string[];
+    operationalImprovements: string[];
+    strategicMoves: string[];
+  };
+  marketingStrategy: MarketingPlan;
+  expansionAnalysis: {
+    expansionReadinessScore: number;
+    recommendedZones: LocationRecommendation[];
+    riskLevel: "Low" | "Medium" | "High";
+    breakEvenEstimation: string;
+  };
+  financialImpactSimulation: {
+    expectedRevenueIncrease: number;
+    expectedCostReduction: number;
+    expectedProfitIncrease: number;
+    roiEstimation: string;
+  };
+  actionPlanRoadmap: {
+    now: string[];
+    next30Days: string[];
+    next3Months: string[];
+    next12Months: string[];
+  };
+  designBrief: DesignBrief;
+  charts: {
+    dailySeries: TimeSeriesPoint[];
+    hourlySeries: { hour: string; revenue: number }[];
+    categoryMix: RankedItem[];
+    channelMix: RankedItem[];
+  };
+  disclaimer: string;
+};
