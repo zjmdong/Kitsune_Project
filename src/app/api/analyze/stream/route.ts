@@ -1,6 +1,6 @@
 import { runRealAnalysis } from "@/lib/analysis-server";
 import { generateSimulatedReport } from "@/lib/simulation";
-import type { AnalysisPayload } from "@/lib/types";
+import type { AnalysisPayload, LoadingStep } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,13 +29,19 @@ export async function POST(request: Request) {
         try {
           if (payload.mode === "template") {
             const report = payload.templateReport ?? generateSimulatedReport(payload);
-            send({ type: "progress", progress: 100, stage: "Template report ready", log: "Loaded the hidden pitch template report from the uploaded template package." });
+            const script: LoadingStep[] = payload.loadingScript?.length
+              ? payload.loadingScript
+              : [{ progress: 100, stage: "Template report ready", thought: "Loaded the hidden pitch template report from the uploaded template package." }];
+            script.forEach((step) => {
+              send({ type: "progress", progress: step.progress, stage: step.stage, log: step.thought });
+              send({ type: "output", channel: "system", text: `[${step.stage}] ${step.thought}\n` });
+            });
             send({ type: "done", report });
             close();
             return;
           }
 
-          const report = await runRealAnalysis(payload, (event) => send({ type: "progress", ...event }));
+          const report = await runRealAnalysis(payload, (event) => send(event));
           send({ type: "done", report });
           close();
         } catch (error) {
