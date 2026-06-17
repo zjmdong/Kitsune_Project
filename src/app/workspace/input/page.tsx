@@ -195,11 +195,22 @@ export default function InputPage() {
         setError("Template file is not a valid BranchWise hidden demo template.");
         return;
       }
+      const templateReport = parsed.payload.templateReport
+        ? {
+            ...parsed.payload.templateReport,
+            designBrief: {
+              ...parsed.payload.templateReport.designBrief,
+              imagePath:
+                parsed.payload.templateReport.designBrief.imagePath ??
+                parsed.payload.templateAssets?.designBriefImagePath
+            }
+          }
+        : undefined;
       setPayload({
         ...parsed.payload,
         mode: "template",
         loadingScript: parsed.loadingScript,
-        templateReport: parsed.payload.templateReport,
+        templateReport,
         aiConfig: parsed.payload.aiConfig ?? payload.aiConfig ?? defaultAiConfig
       });
       setUploadMessage(

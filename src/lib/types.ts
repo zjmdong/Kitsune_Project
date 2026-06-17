@@ -104,6 +104,7 @@ export type DesignBrief = {
   interiorStyle: string;
   moodboardPrompt: string;
   storefrontNotes: string[];
+  imagePath?: string;
 };
 
 export type ConsultantReport = {
@@ -186,6 +187,10 @@ export type AnalysisPayload = {
   aiConfig?: AiConfig;
   templateReport?: FinalConsultantReport;
   loadingScript?: LoadingStep[];
+  templateAssets?: {
+    designBriefImagePath?: string;
+    designBriefLocalPath?: string;
+  };
 };
 
 export type LoadingStep = {

@@ -339,7 +339,11 @@ export default function ReportPage() {
 
         <section className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
           <Card className="overflow-hidden p-0">
-            <img src="/branchwise-moodboard.png" alt="AI generated restaurant moodboard" className="h-full min-h-[330px] w-full object-cover" />
+            <img
+              src={report.designBrief.imagePath ?? "/branchwise-moodboard.png"}
+              alt="AI generated restaurant moodboard"
+              className="h-full min-h-[330px] w-full object-cover"
+            />
           </Card>
           <Card>
             <div className="flex items-center gap-2">

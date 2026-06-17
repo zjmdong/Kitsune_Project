@@ -3,6 +3,9 @@ import { generateSimulatedReport } from "./simulation";
 import { defaultAiConfig } from "./workflow";
 import type { AnalysisPayload, LoadingStep } from "./types";
 
+export const localMoodboardPath = "/branchwise-moodboard.png";
+export const localMoodboardFilePath = "C:/Users/zjmdong/Documents/HKU_AI-in-Business/public/branchwise-moodboard.png";
+
 export type BranchWiseDemoTemplate = {
   templateName: string;
   version: 1;
@@ -116,13 +119,18 @@ export function createDemoTemplate(): BranchWiseDemoTemplate {
     loadingScript: demoLoadingScript
   };
   const report = generateSimulatedReport(payload);
+  report.designBrief.imagePath = localMoodboardPath;
 
   return {
     templateName: "BranchWise hidden pitch demo template",
     version: 1,
     payload: {
       ...payload,
-      templateReport: report
+      templateReport: report,
+      templateAssets: {
+        designBriefImagePath: localMoodboardPath,
+        designBriefLocalPath: localMoodboardFilePath
+      }
     },
     loadingScript: demoLoadingScript
   };
