@@ -9,7 +9,7 @@ import type { AnalysisPayload, FinalConsultantReport, LoadingStep } from "@/lib/
 
 type StreamEvent =
   | { type: "progress"; progress: number; stage: string; log: string }
-  | { type: "output"; channel: "request" | "raw" | "content" | "thinking" | "system"; text: string }
+  | { type: "output"; channel: "thinking" | "system"; text: string }
   | { type: "done"; report: FinalConsultantReport }
   | { type: "error"; message: string };
 

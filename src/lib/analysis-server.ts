@@ -12,7 +12,7 @@ export type AnalysisProgressEvent = {
   log: string;
 } | {
   type: "output";
-  channel: "request" | "raw" | "content" | "thinking" | "system";
+  channel: "thinking" | "system";
   text: string;
 };
 
@@ -40,6 +40,14 @@ function emitOutput(
   onEvent?.({ type: "output", channel, text });
 }
 
+function emitThinking(
+  onEvent: ((event: AnalysisProgressEvent) => void) | undefined,
+  title: string,
+  body: string
+) {
+  emitOutput(onEvent, "thinking", `• ${title}\n  ${body}\n\n`);
+}
+
 function modelText(data: ChatResponse) {
   return (
     data.output_text ??
@@ -58,24 +66,6 @@ function modelText(data: ChatResponse) {
 
 function hasHiddenReasoning(data: ChatResponse) {
   return Boolean(data.choices?.some((choice) => choice.message?.reasoning_content));
-}
-
-function sanitizeReasoning(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map((item) => sanitizeReasoning(item));
-  }
-  if (value && typeof value === "object") {
-    const record = value as Record<string, unknown>;
-    return Object.fromEntries(
-      Object.entries(record).map(([key, item]) => {
-        if (key === "reasoning_content" && typeof item === "string") {
-          return [key, `[protected reasoning_content: ${item.length} chars received]`];
-        }
-        return [key, sanitizeReasoning(item)];
-      })
-    );
-  }
-  return value;
 }
 
 function extractDeltaText(value: unknown) {
@@ -112,7 +102,6 @@ async function readStreamingModelResponse(
 ) {
   if (!response.body) {
     const text = await response.text();
-    emitOutput(onEvent, "raw", `${text}\n`);
     const data = JSON.parse(text) as ChatResponse;
     return { content: modelText(data), reasoningSeen: hasHiddenReasoning(data), rawText: text };
   }
@@ -123,7 +112,40 @@ async function readStreamingModelResponse(
   let content = "";
   let rawText = "";
   let reasoningSeen = false;
+  let contentStarted = false;
   let lastProgress = 42;
+  let thinkingStep = 0;
+
+  const thinkingSteps = [
+    {
+      title: "Reading business context",
+      body: "The model is checking the store profile, location, operating model, customer segments, and selected business goals."
+    },
+    {
+      title: "Analyzing sales and cost structure",
+      body: "The model is comparing revenue, rent, labor, ingredient cost, margin, and customer volume to understand the current operating baseline."
+    },
+    {
+      title: "Diagnosing bottlenecks",
+      body: "The model is looking for constraints such as underused hours, high fixed costs, weak retention, and menu or product complexity."
+    },
+    {
+      title: "Evaluating expansion readiness",
+      body: "The model is testing whether the business can support a second branch without overextending rent, staffing, or management capacity."
+    },
+    {
+      title: "Drafting recommendations",
+      body: "The model is converting the analysis into quick wins, operating improvements, strategic moves, marketing actions, and a roadmap."
+    }
+  ];
+
+  const emitNextThinkingStep = () => {
+    const step = thinkingSteps[Math.min(thinkingStep, thinkingSteps.length - 1)];
+    if (thinkingStep < thinkingSteps.length) {
+      emitThinking(onEvent, step.title, step.body);
+      thinkingStep += 1;
+    }
+  };
 
   const handleData = (dataLine: string) => {
     const trimmed = dataLine.trim();
@@ -133,26 +155,33 @@ async function readStreamingModelResponse(
     try {
       const parsed = JSON.parse(trimmed) as unknown;
       const { content: contentDelta, reasoning } = extractDeltaText(parsed);
-      const sanitized = JSON.stringify(sanitizeReasoning(parsed));
-      emitOutput(onEvent, "raw", `${sanitized}\n`);
 
       if (reasoning) {
         reasoningSeen = true;
-        emitOutput(onEvent, "thinking", `[protected reasoning_content stream: ${reasoning.length} chars received]\n`);
+        if (thinkingStep === 0 || rawText.length > thinkingStep * 2600) {
+          emitNextThinkingStep();
+        }
       }
 
       if (contentDelta) {
         content += contentDelta;
-        emitOutput(onEvent, "content", contentDelta);
+        if (!contentStarted) {
+          contentStarted = true;
+          emitThinking(
+            onEvent,
+            "Writing consultant report",
+            "The model has finished its internal reasoning pass and is now composing the structured report fields."
+          );
+        }
       }
 
       const nextProgress = Math.min(84, 42 + Math.floor((content.length + rawText.length) / 900));
       if (nextProgress >= lastProgress + 4) {
         lastProgress = nextProgress;
-        emitProgress(onEvent, nextProgress, reasoningSeen && !contentDelta ? "Thinking" : "Streaming model output", `Received ${rawText.length.toLocaleString()} raw stream characters from the model.`);
+        emitProgress(onEvent, nextProgress, reasoningSeen && !contentDelta ? "Thinking" : "Writing report", "The model is continuing the analysis and report generation.");
       }
     } catch {
-      emitOutput(onEvent, "raw", `${trimmed}\n`);
+      rawText += `${trimmed}\n`;
     }
   };
 
@@ -233,6 +262,11 @@ export async function runRealAnalysis(
   onEvent?: (event: AnalysisProgressEvent) => void
 ): Promise<FinalConsultantReport> {
   emitProgress(onEvent, 5, "Reading Sales Record", "Required owner inputs, goals, sales evidence, and LLM configuration are being checked.");
+  emitThinking(
+    onEvent,
+    "Reading uploaded business inputs",
+    "The system is loading the owner profile, financial fields, selected goals, uploaded sales records, and supporting evidence."
+  );
 
   const { provider, apiKey, endpoint, model } = configFromPayload(payload);
   if (!apiKey) {
@@ -240,6 +274,11 @@ export async function runRealAnalysis(
   }
 
   emitProgress(onEvent, 16, "Analyze your sales", `Using ${promptVersion} with ${payload.salesRecords.length} sales rows and ${payload.uploadedSources.length} uploaded source references.`);
+  emitThinking(
+    onEvent,
+    "Building analysis baseline",
+    "The system is calculating deterministic KPIs first, so the model can focus on diagnosis, expansion judgement, and action planning."
+  );
   const fallbackShape = generateSimulatedReport({ ...payload, mode: "real" });
   const prompt = buildAnalysisPrompt(payload, fallbackShape);
 
@@ -265,26 +304,6 @@ export async function runRealAnalysis(
     max_tokens: 4000
   };
 
-  emitOutput(
-    onEvent,
-    "request",
-    `${JSON.stringify(
-      {
-        endpoint,
-        method: "POST",
-        body: {
-          ...requestBody,
-          messages: requestBody.messages.map((message) => ({
-            ...message,
-            content: message.role === "user" ? `[analysis prompt: ${prompt.length.toLocaleString()} chars]` : message.content
-          }))
-        }
-      },
-      null,
-      2
-    )}\n`
-  );
-
   let response: Response;
   try {
     response = await fetch(endpoint, {
@@ -305,7 +324,7 @@ export async function runRealAnalysis(
   emitProgress(onEvent, 42, "Thinking", `The model endpoint responded with HTTP ${response.status}; reading the streamed report payload now.`);
   if (!response.ok) {
     const rawText = await response.text();
-    emitOutput(onEvent, "raw", `${rawText}\n`);
+    emitOutput(onEvent, "system", `• Model endpoint returned an error\n  HTTP ${response.status}. The system will continue with the deterministic BranchWise KPI engine.\n\n`);
     emitProgress(onEvent, 92, "Completing with KPI engine", "The model endpoint returned an error, so the report is being completed with the deterministic BranchWise analysis engine.");
     return fallbackAfterModelIssue(fallbackShape, payload, provider, model, `Model API request failed (${response.status}): ${rawText.slice(0, 220)}`);
   }
@@ -322,6 +341,10 @@ export async function runRealAnalysis(
   let parsed: Partial<FinalConsultantReport>;
   try {
     parsed = JSON.parse(extractJson(text)) as Partial<FinalConsultantReport>;
+    parsed.visibleAnalysisLog?.slice(0, 5).forEach((item) => {
+      const [title, ...rest] = item.split(":");
+      emitThinking(onEvent, title.length > 8 && title.length < 70 ? title : "Model analysis note", rest.join(":").trim() || item);
+    });
   } catch {
     emitProgress(onEvent, 92, "Completing with KPI engine", "The model returned invalid report JSON, so the report is being completed with the deterministic BranchWise analysis engine.");
     return fallbackAfterModelIssue(fallbackShape, payload, provider, model, `Model content was not valid report JSON: ${text.slice(0, 220)}`);
