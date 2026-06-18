@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 
 function getTypeDelay(character: string) {
-  if (character === ".") return 240;
-  if (character === " ") return 36;
-  return 48;
+  if (character === ".") return 360;
+  if (character === " ") return 70;
+  return 92;
 }
 
 export function TypewriterText({ brandText, sloganText }: { brandText: string; sloganText: string }) {
@@ -33,14 +33,14 @@ export function TypewriterText({ brandText, sloganText }: { brandText: string; s
       for (let index = text.length - 1; index >= 0; index -= 1) {
         if (cancelled) return;
         setVisibleText(text.slice(0, index));
-        await wait(28);
+        await wait(56);
       }
     }
 
     async function runLoop() {
       while (!cancelled) {
         await typePhrase(brandText);
-        await wait(700);
+        await wait(500);
         await deletePhrase(brandText);
         await wait(260);
         await typePhrase(sloganText);
