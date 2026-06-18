@@ -313,7 +313,7 @@ export default function ReportPage() {
         </section>
 
         <section className="mt-5 grid gap-5 lg:grid-cols-4">
-          <HighlightCard label="Total revenue" value={money(report.financialKpis.totalRevenue, { compact: true })} icon={TrendingUp} tone="blue" />
+          <HighlightCard label="Evidence period revenue" value={money(report.financialKpis.totalRevenue, { compact: true })} icon={TrendingUp} tone="blue" />
           <HighlightCard label="Expansion risk" value={report.expansionAnalysis.riskLevel} icon={report.expansionAnalysis.riskLevel === "High" ? AlertTriangle : CheckCircle2} tone={riskTone(report.expansionAnalysis.riskLevel)} />
           <HighlightCard label="Profit uplift" value={formatPercent(report.financialImpactSimulation.expectedProfitIncrease)} icon={Rocket} tone={profitTone(report.financialImpactSimulation.expectedProfitIncrease)} />
           <HighlightCard label="Cost ratio" value={formatPercent(report.financialKpis.costRatio)} icon={Gauge} tone={costTone(report.financialKpis.costRatio)} />
