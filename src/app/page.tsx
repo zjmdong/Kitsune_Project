@@ -22,11 +22,8 @@ export default function Home() {
 
       <section className="relative z-10 grid min-h-screen place-items-center px-5 pt-[72px] text-center">
         <div className="max-w-5xl">
-          <p className="mx-auto max-w-4xl text-center text-4xl font-semibold uppercase leading-tight text-white/90 sm:text-6xl">
-            KITSUNE AI
-          </p>
-          <h1 className="landing-hero-title mx-auto mt-5 max-w-4xl text-4xl font-semibold leading-tight text-white sm:text-6xl">
-            <TypewriterText text="Scale smarter. Expand with AI confidence." />
+          <h1 className="landing-hero-title mx-auto max-w-4xl text-4xl font-semibold leading-tight text-white sm:text-6xl">
+            <TypewriterText brandText="KITSUNE AI" sloganText="Scale smarter. Expand with AI confidence." />
           </h1>
           <Link href="/workspace/input" className="landing-cta mt-8 inline-flex h-[52px] items-center gap-3 rounded-md px-6 text-sm font-semibold text-ink">
             Try Now

@@ -128,10 +128,16 @@ textarea:focus-visible {
 
 .landing-typewriter {
   display: inline;
-  padding-right: 0.1em;
-  background: linear-gradient(90deg, transparent calc(100% - 3px), var(--typing-cursor-color, #fdba74) 0);
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
+}
+
+.landing-typewriter-caret {
+  display: inline-block;
+  width: 3px;
+  height: 0.88em;
+  margin-left: 0.08em;
+  vertical-align: -0.08em;
+  background: #fdba74;
+  box-shadow: 0 0 18px rgba(253, 186, 116, 0.78);
   animation: caretBlink 0.82s steps(1, end) infinite;
 }
 
@@ -264,16 +270,20 @@ textarea:focus-visible {
 @keyframes caretBlink {
   0%,
   48% {
-    --typing-cursor-color: #fdba74;
+    opacity: 1;
   }
   49%,
   100% {
-    --typing-cursor-color: transparent;
+    opacity: 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .landing-typewriter {
+    animation: none;
+  }
+
+  .landing-typewriter-caret {
     animation: none;
   }
 }
