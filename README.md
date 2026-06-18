@@ -11,12 +11,32 @@ A deployable Next.js demo for an AI business analyst platform serving Hong Kong 
 
 ## Run locally
 
+### One-click start on Windows
+
+Double-click:
+
+```text
+start-dev.bat
+```
+
+Or run:
+
+```powershell
+.\start-dev.ps1
+```
+
+Open `http://localhost:3000`.
+
+### Manual start
+
 ```bash
 pnpm install
 pnpm dev
 ```
 
 Open `http://localhost:3000`.
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for Vercel and Cloudflare deployment notes.
 
 ## LLM Configuration
 
