@@ -15,7 +15,7 @@ export default function Home() {
             <span className="grid h-11 w-11 place-items-center overflow-hidden rounded-md border border-white/14 bg-white/90 shadow-panel">
               <img src="/kitsune-logo.png" alt="KITSUNE logo" className="h-9 w-9 object-contain" />
             </span>
-            <span className="text-lg font-semibold tracking-normal">KITSUNE</span>
+            <span className="text-lg font-semibold tracking-normal">Kitsune AI</span>
           </Link>
         </div>
       </header>

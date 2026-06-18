@@ -9,8 +9,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "KITSUNE",
-  description: "AI business intelligence for SME restaurant and retail expansion."
+  title: "Kitsune AI",
+  description: "AI business intelligence for SME restaurant and retail expansion.",
+  icons: {
+    icon: "/kitsune-logo.png",
+    shortcut: "/kitsune-logo.png",
+    apple: "/kitsune-logo.png"
+  }
 };
 
 export default function RootLayout({
