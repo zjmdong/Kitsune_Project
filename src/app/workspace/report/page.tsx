@@ -92,15 +92,48 @@ function costTone(value: number): Tone {
 }
 
 function rankAnalysisItems(items: string[], section: string) {
-  const priorityWords = ["risk", "rent", "margin", "profit", "cost", "leak", "declin", "payback", "staff", "waste", "conversion", "revenue"];
-  return items.map((item, index) => {
+  const impactSignals = [
+    { keyword: "profit", weight: 18 },
+    { keyword: "margin", weight: 17 },
+    { keyword: "revenue", weight: 16 },
+    { keyword: "cost", weight: 15 },
+    { keyword: "waste", weight: 14 },
+    { keyword: "rent", weight: 13 },
+    { keyword: "payback", weight: 13 },
+    { keyword: "leak", weight: 12 },
+    { keyword: "pricing", weight: 12 },
+    { keyword: "labor", weight: 11 },
+    { keyword: "staff", weight: 11 },
+    { keyword: "risk", weight: 10 },
+    { keyword: "conversion", weight: 9 },
+    { keyword: "customer", weight: 8 },
+    { keyword: "traffic", weight: 8 },
+    { keyword: "inventory", weight: 7 }
+  ];
+  const scoredItems = items.map((item, index) => {
     const lower = `${section} ${item}`.toLowerCase();
-    const keywordHit = priorityWords.some((word) => lower.includes(word));
+    const impactScore = impactSignals.reduce((score, signal) => score + (lower.includes(signal.keyword) ? signal.weight : 0), 0);
+    const positionScore = Math.max(0, 6 - index);
+
     return {
+      index,
       item,
-      important: index < 2 || keywordHit
+      score: impactScore + positionScore
     };
   });
+  const priorityCount = items.length > 3 ? 3 : Math.max(1, items.length - 1);
+  const priorityIndexes = new Set(
+    scoredItems
+      .slice()
+      .sort((a, b) => b.score - a.score || a.index - b.index)
+      .slice(0, priorityCount)
+      .map((item) => item.index)
+  );
+
+  return scoredItems.map(({ item, index }) => ({
+    item,
+    important: priorityIndexes.has(index)
+  }));
 }
 
 function PriorityList({ items, section }: { items: string[]; section: string }) {
@@ -315,7 +348,7 @@ export default function ReportPage() {
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="name" width={112} tick={{ fontSize: 11 }} tickFormatter={(value) => String(value).slice(0, 17)} />
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Bar dataKey="value" fill="#16a34a" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="value" fill="#2563eb" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

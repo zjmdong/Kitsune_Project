@@ -20,8 +20,12 @@ export default function Home() {
       </header>
 
       <section className="relative z-10 grid min-h-screen place-items-center px-5 pt-[72px] text-center">
-        <div className="glass-panel max-w-4xl px-6 py-9 sm:px-10 sm:py-12">
-          <h1 className="text-4xl font-semibold leading-tight text-white sm:text-6xl">
+        <div className="max-w-5xl">
+          <div className="mb-6 inline-flex items-center justify-center gap-3 text-white/88">
+            <img src="/kitsune-logo.png" alt="KITSUNE AI logo" className="h-12 w-12 object-contain drop-shadow-[0_14px_24px_rgba(249,115,22,0.28)] sm:h-14 sm:w-14" />
+            <span className="text-sm font-semibold uppercase tracking-normal sm:text-base">KITSUNE AI</span>
+          </div>
+          <h1 className="landing-typewriter mx-auto max-w-4xl text-4xl font-semibold leading-tight text-white sm:text-6xl">
             Scale smarter. Expand with AI confidence.
           </h1>
           <Link href="/workspace/input" className="landing-cta mt-8 inline-flex h-[52px] items-center gap-3 rounded-md px-6 text-sm font-semibold text-ink">

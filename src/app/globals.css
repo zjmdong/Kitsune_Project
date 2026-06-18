@@ -122,6 +122,25 @@ textarea:focus-visible {
   box-shadow: 0 22px 60px rgba(249, 115, 22, 0.34);
 }
 
+.landing-typewriter {
+  display: inline-block;
+  overflow: hidden;
+  text-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
+  animation: typeReveal 2.9s steps(42, end) both;
+}
+
+.landing-typewriter::after {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 0.88em;
+  margin-left: 8px;
+  vertical-align: -0.08em;
+  background: #fdba74;
+  box-shadow: 0 0 18px rgba(253, 186, 116, 0.78);
+  animation: caretBlink 0.82s steps(1, end) infinite;
+}
+
 .orbit-ring {
   position: absolute;
   left: 50%;
@@ -245,6 +264,36 @@ textarea:focus-visible {
   }
   50% {
     transform: translateY(-12px);
+  }
+}
+
+@keyframes typeReveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes caretBlink {
+  0%,
+  48% {
+    opacity: 1;
+  }
+  49%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-typewriter {
+    animation: none;
+  }
+
+  .landing-typewriter::after {
+    animation: none;
   }
 }
 
