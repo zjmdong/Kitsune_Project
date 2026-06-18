@@ -39,7 +39,7 @@ function ScoreCard({ label, value }: { label: string; value: number }) {
   );
 }
 
-const mixColors = ["#153f39", "#b65345", "#c59a45", "#4c7c70", "#7a6f5a", "#2f5f8f"];
+const mixColors = ["#c2410c", "#ea580c", "#f59e0b", "#9a3412", "#fb923c", "#7c2d12"];
 
 function HighlightCard({
   label,
@@ -125,7 +125,7 @@ export default function ReportPage() {
             <p className="text-sm font-semibold uppercase text-clay">Step 3 of 3</p>
             <h1 className="mt-1 text-3xl font-semibold">Final AI Consultant Report</h1>
             <p className="mt-2 text-sm leading-6 text-ink/62">
-              BranchWise AI output | Generated {new Date(report.generatedAt).toLocaleString()}
+              Kitsune output | Generated {new Date(report.generatedAt).toLocaleString()}
             </p>
           </div>
           <div className="no-print flex flex-wrap gap-2">
@@ -177,7 +177,7 @@ export default function ReportPage() {
                   <XAxis dataKey="label" minTickGap={25} tick={{ fontSize: 12 }} />
                   <YAxis tickFormatter={(value) => formatCurrency(Number(value), { compact: true })} tick={{ fontSize: 12 }} />
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Area dataKey="revenue" stroke="#153f39" fill="#d8eadf" strokeWidth={2} name="Revenue" />
+                  <Area dataKey="revenue" stroke="#c2410c" fill="#ffedd5" strokeWidth={2} name="Revenue" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -198,7 +198,7 @@ export default function ReportPage() {
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="name" width={112} tick={{ fontSize: 11 }} tickFormatter={(value) => String(value).slice(0, 17)} />
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Bar dataKey="value" fill="#153f39" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="value" fill="#c2410c" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -401,7 +401,7 @@ export default function ReportPage() {
           <section className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
             <Card className="overflow-hidden p-0">
               <img
-                src={report.designBrief.imagePath ?? "/branchwise-moodboard.png"}
+                src={report.designBrief.imagePath ?? "/kitsune-moodboard.png"}
                 alt="AI generated restaurant moodboard"
                 className="h-full min-h-[330px] w-full object-cover"
               />

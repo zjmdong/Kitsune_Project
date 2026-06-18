@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "BranchWise AI",
-  description: "AI business analyst demo for SME restaurant expansion."
+  title: "Kitsune",
+  description: "AI business intelligence for SME restaurant and retail expansion."
 };
 
 export default function RootLayout({

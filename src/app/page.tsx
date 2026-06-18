@@ -12,9 +12,9 @@ export default function Home() {
         <div className="mx-auto flex h-[72px] max-w-7xl items-center px-5">
           <Link href="/" className="inline-flex items-center gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-md border border-white/14 bg-white/12 shadow-panel">
-              <Network className="h-5 w-5 text-cyan-100" aria-hidden="true" />
+              <Network className="h-5 w-5 text-orange-100" aria-hidden="true" />
             </span>
-            <span className="text-lg font-semibold tracking-normal">BranchWise AI</span>
+            <span className="text-lg font-semibold tracking-normal">Kitsune</span>
           </Link>
         </div>
       </header>

@@ -1,6 +1,6 @@
-# BranchWise AI Deployment Guide
+# Kitsune Deployment Guide
 
-## One-click local start on Windows
+## One-Click Local Start On Windows
 
 Double-click:
 
@@ -28,25 +28,25 @@ Open:
 http://localhost:3000
 ```
 
-Keep the terminal window open while presenting. Press `Ctrl+C` to stop.
+Keep the terminal window open while using the app. Press `Ctrl+C` to stop.
 
-## Required environment variables
+## Required Environment Variables
 
 Set these locally in `.env.local` and in your cloud platform environment variables:
 
 ```bash
-BRANCHWISE_AI_ENDPOINT=https://opencode.ai/zen/go/v1/chat/completions
-BRANCHWISE_AI_MODEL=deepseek-v4-flash
-BRANCHWISE_AI_API_KEY=your_real_api_key
+KITSUNE_AI_ENDPOINT=https://opencode.ai/zen/go/v1/chat/completions
+KITSUNE_AI_MODEL=deepseek-v4-flash
+KITSUNE_AI_API_KEY=your_real_api_key
 ```
 
 Never commit `.env.local`.
 
-## Deploy to Vercel
+## Deploy To Vercel
 
 Vercel is the simplest production target for this app because it supports Next.js App Router and API route handlers with minimal configuration.
 
-### GitHub import
+### GitHub Import
 
 1. Push the repository to GitHub.
 2. Open Vercel Dashboard.
@@ -55,14 +55,14 @@ Vercel is the simplest production target for this app because it supports Next.j
 5. Framework preset: `Next.js`.
 6. Build command: keep default, or use `pnpm build` / `npm run build`.
 7. Add environment variables:
-   - `BRANCHWISE_AI_ENDPOINT`
-   - `BRANCHWISE_AI_MODEL`
-   - `BRANCHWISE_AI_API_KEY`
+   - `KITSUNE_AI_ENDPOINT`
+   - `KITSUNE_AI_MODEL`
+   - `KITSUNE_AI_API_KEY`
 8. Deploy.
 
 Every push to `main` will trigger a new production deployment if the project is connected to that branch.
 
-### CLI deploy
+### CLI Deploy
 
 ```bash
 npm i -g vercel
@@ -72,7 +72,7 @@ vercel --prod
 
 When prompted, link this folder to a Vercel project. Add the same environment variables in the Vercel dashboard or with `vercel env add`.
 
-## Deploy to Cloudflare
+## Deploy To Cloudflare
 
 This app uses Next.js route handlers and streaming API responses, so do not deploy it as a plain static Cloudflare Pages export.
 
@@ -82,7 +82,7 @@ Recommended Cloudflare target:
 Cloudflare Workers + OpenNext adapter
 ```
 
-### Existing Next.js project path
+### Existing Next.js Project Path
 
 From the project root:
 
@@ -110,27 +110,27 @@ or, if Wrangler auto-detects the app:
 npx wrangler deploy
 ```
 
-### Cloudflare environment variables
+### Cloudflare Environment Variables
 
 Set production secrets with Wrangler:
 
 ```bash
-npx wrangler secret put BRANCHWISE_AI_API_KEY
+npx wrangler secret put KITSUNE_AI_API_KEY
 ```
 
 Non-secret values can go in `wrangler.jsonc` or Cloudflare dashboard variables:
 
 ```text
-BRANCHWISE_AI_ENDPOINT
-BRANCHWISE_AI_MODEL
+KITSUNE_AI_ENDPOINT
+KITSUNE_AI_MODEL
 ```
 
-### Windows note
+### Windows Note
 
 OpenNext Cloudflare workflows can be more reliable on Linux/macOS or WSL. If migration/build behaves strangely on Windows, use WSL or GitHub Actions for the Cloudflare build.
 
-## Recommended for the pitch
+## Recommendation
 
-Use Vercel for the fastest stable demo deployment.
+Use Vercel for the fastest stable production deployment.
 
-Use Cloudflare Workers only if you specifically want Cloudflare hosting or already know Wrangler/OpenNext.
+Use Cloudflare Workers if you specifically want Cloudflare hosting or already know Wrangler/OpenNext.

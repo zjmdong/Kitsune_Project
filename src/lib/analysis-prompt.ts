@@ -1,11 +1,11 @@
 import type { AnalysisPayload, FinalConsultantReport, SalesRecord } from "./types";
 
-export const promptVersion = "branchwise-analysis-v2";
+export const promptVersion = "kitsune-analysis-v1";
 
 export const analysisWorkflow = [
   "Validate required owner inputs and uploaded evidence.",
   "Normalize business profile, financial fields, sales records, and supporting files.",
-  "Ask the configured LLM to produce a structured consultant report in the BranchWise JSON contract.",
+  "Ask the configured LLM to produce a structured consultant report in the Kitsune JSON contract.",
   "Parse and validate the model response against the report shape used by the UI.",
   "Render KPI charts, expansion analysis, marketing plan, roadmap, and optional design brief."
 ];
@@ -103,7 +103,7 @@ export function buildAnalysisPrompt(payload: AnalysisPayload, fallbackShape: Fin
     visibleAnalysisLog: ["5 concise model-visible work notes"]
   };
 
-  return `You are BranchWise AI, a senior business analyst for Hong Kong SME restaurant and retail owners.
+  return `You are Kitsune, a senior business analyst for Hong Kong SME restaurant and retail owners.
 
 Task:
 Produce a business consultant report for a business owner who wants revenue growth, cost control, marketing improvement, and possibly expansion into a chain.
@@ -114,7 +114,7 @@ ${analysisWorkflow.map((step, index) => `${index + 1}. ${step}`).join("\n")}
 Rules:
 - Return only valid JSON. No markdown, no code fences, no prose outside JSON.
 - Do not expose hidden chain-of-thought. Include a field named "visibleAnalysisLog" with 5-8 concise, user-safe work notes explaining what evidence you used and what conclusions were drawn.
-- Use Hong Kong SME context. Treat location advice as demo-level business intelligence, not legal or investment advice.
+- Use Hong Kong SME context. Treat location advice as AI-assisted planning intelligence, not legal or investment advice.
 - If the user did not select "Branding/interior design", keep designBrief minimal because the UI will hide it.
 - Use the exact JSON key names shown in the target shape. Numeric percentages must be decimals, for example 0.12 for 12%.
 - Keep arrays concise but business-useful.

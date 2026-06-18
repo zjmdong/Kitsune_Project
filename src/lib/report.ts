@@ -42,16 +42,16 @@ export function createMarketingPlan(
 export function createDesignBrief(profile: BusinessProfile): DesignBrief {
   return {
     palette: [
-      { name: "Deep Thai Green", hex: "#153f39" },
-      { name: "Tamarind Red", hex: "#b65345" },
-      { name: "Brass Accent", hex: "#c59a45" },
-      { name: "Warm Ivory", hex: "#f6f4ee" },
-      { name: "Charcoal Ink", hex: "#17201d" }
+      { name: "Kitsune Orange", hex: "#ea580c" },
+      { name: "Amber Glow", hex: "#f59e0b" },
+      { name: "Cedar Brown", hex: "#7c2d12" },
+      { name: "Warm Ivory", hex: "#fff7ed" },
+      { name: "Charcoal Ink", hex: "#24130a" }
     ],
     interiorStyle:
-      "Compact premium Thai dining: warm brass lighting, green tile, rattan texture, efficient two-seat tables, and one camera-ready signature wall.",
+      "Compact premium dining: warm amber lighting, textured ivory walls, cedar accents, efficient two-seat tables, and one camera-ready signature wall.",
     moodboardPrompt:
-      "A refined Hong Kong Thai restaurant interior with deep green tile, brass lighting, rattan textures, warm ivory walls, compact street-front seating, and a premium but welcoming mood.",
+      "A refined Hong Kong restaurant interior with amber lighting, cedar details, warm ivory walls, compact street-front seating, and a premium but welcoming mood.",
     storefrontNotes: [
       "Use a narrower menu board outside the entrance to keep the frontage clean.",
       "Place the hero dish visual near the pickup zone for delivery and takeaway conversion.",
@@ -81,7 +81,7 @@ export function createMockConsultantReport(
       `${analysis.bestProducts[0]?.name ?? "The top product"} is the clearest hero item and should anchor ads, tasting menus, and launch bundles.`,
       `${analysis.peakHour}:00 is the strongest demand window, so staffing and prep should be protected before opening a second branch.`,
       `${topLocation?.district ?? "The top district"} ranks highest because it balances target-customer fit, traffic, and rent affordability.`,
-      analysis.operatingRisks[0] ?? "No severe operating risk was detected in the demo dataset."
+      analysis.operatingRisks[0] ?? "No severe operating risk was detected in the supplied dataset."
     ],
     recommendations: [
       `Negotiate only locations that keep monthly rent below ${formatCurrency(
@@ -107,6 +107,6 @@ export function createMockConsultantReport(
     marketingPlan,
     designBrief,
     disclaimer:
-      "Demo-level analysis only. Real lease, legal, accounting, licensing, and investment decisions require professional review."
+      "AI-assisted analysis for planning use only. Real lease, legal, accounting, licensing, and investment decisions require professional review."
   };
 }

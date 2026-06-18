@@ -31,7 +31,7 @@ export async function POST(request: Request) {
             const report = payload.templateReport ?? generateSimulatedReport(payload);
             const script: LoadingStep[] = payload.loadingScript?.length
               ? payload.loadingScript
-              : [{ progress: 100, stage: "Template report ready", thought: "Loaded the hidden pitch template report from the uploaded template package." }];
+              : [{ progress: 100, stage: "Template report ready", thought: "Loaded the internal sample report from the uploaded package." }];
             script.forEach((step) => {
               send({ type: "progress", progress: step.progress, stage: step.stage, log: step.thought });
               send({ type: "output", channel: "system", text: `[${step.stage}] ${step.thought}\n` });

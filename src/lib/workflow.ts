@@ -1,7 +1,7 @@
 import type { AiConfig, AnalysisPayload, FinancialInput, GoalOption, IntakeProfile } from "./types";
 
-export const payloadStorageKey = "branchwise:analysis-payload";
-export const reportStorageKey = "branchwise:analysis-report";
+export const payloadStorageKey = "kitsune:analysis-payload";
+export const reportStorageKey = "kitsune:analysis-report";
 
 export const goalOptions: GoalOption[] = [
   "Increase revenue",

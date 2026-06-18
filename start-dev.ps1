@@ -4,7 +4,7 @@ $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $projectRoot
 
 Write-Host ""
-Write-Host "Starting BranchWise AI..." -ForegroundColor Cyan
+Write-Host "Starting Kitsune..." -ForegroundColor Cyan
 Write-Host "Project: $projectRoot"
 Write-Host ""
 
@@ -35,7 +35,7 @@ if (-not (Test-Path $nextCmd)) {
 }
 
 Write-Host ""
-Write-Host "BranchWise AI will open at http://localhost:3000" -ForegroundColor Green
+Write-Host "Kitsune will open at http://localhost:3000" -ForegroundColor Green
 Write-Host "Keep this window open while presenting. Press Ctrl+C to stop." -ForegroundColor DarkGray
 Write-Host ""
 

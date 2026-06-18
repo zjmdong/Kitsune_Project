@@ -3,17 +3,17 @@ import { generateSimulatedReport } from "./simulation";
 import { defaultAiConfig } from "./workflow";
 import type { AnalysisPayload, LoadingStep } from "./types";
 
-export const localMoodboardPath = "/branchwise-moodboard.png";
-export const localMoodboardFilePath = "C:/Users/zjmdong/Documents/HKU_AI-in-Business/public/branchwise-moodboard.png";
+export const localMoodboardPath = "/kitsune-moodboard.png";
+export const localMoodboardFilePath = "C:/Users/zjmdong/Documents/HKU_AI-in-Business/public/kitsune-moodboard.png";
 
-export type BranchWiseDemoTemplate = {
+export type KitsuneSampleTemplate = {
   templateName: string;
   version: 1;
   payload: AnalysisPayload;
   loadingScript: LoadingStep[];
 };
 
-export const demoLoadingScript: LoadingStep[] = [
+export const sampleLoadingScript: LoadingStep[] = [
   {
     progress: 8,
     stage: "Reading uploaded sales evidence",
@@ -58,7 +58,7 @@ export const demoLoadingScript: LoadingStep[] = [
   }
 ];
 
-export function createDemoTemplate(): BranchWiseDemoTemplate {
+export function createSampleTemplate(): KitsuneSampleTemplate {
   const salesRecords = createSampleSalesRecords();
   const payload: AnalysisPayload = {
     mode: "template",
@@ -100,29 +100,29 @@ export function createDemoTemplate(): BranchWiseDemoTemplate {
     uploadedSources: [
       {
         kind: "sales",
-        name: "branchwise-demo-sales.csv",
+        name: "kitsune-sample-sales.csv",
         rowCount: salesRecords.length,
-        notes: "Template-loaded sales records for the hidden pitch demo."
+        notes: "Template-loaded sales records for internal product validation."
       },
       {
         kind: "inventory",
-        name: "branchwise-demo-inventory-summary.xlsx",
+        name: "kitsune-sample-inventory-summary.xlsx",
         notes: "Template context: weekday starter overstock and dessert waste signals."
       },
       {
         kind: "marketing",
-        name: "branchwise-demo-marketing-notes.pdf",
+        name: "kitsune-sample-marketing-notes.pdf",
         notes: "Template context: Instagram/TikTok/offline traffic mix and launch campaign ideas."
       }
     ],
     aiConfig: defaultAiConfig,
-    loadingScript: demoLoadingScript
+    loadingScript: sampleLoadingScript
   };
   const report = generateSimulatedReport(payload);
   report.designBrief.imagePath = localMoodboardPath;
 
   return {
-    templateName: "BranchWise hidden pitch demo template",
+    templateName: "Kitsune internal sample package",
     version: 1,
     payload: {
       ...payload,
@@ -132,12 +132,12 @@ export function createDemoTemplate(): BranchWiseDemoTemplate {
         designBriefLocalPath: localMoodboardFilePath
       }
     },
-    loadingScript: demoLoadingScript
+    loadingScript: sampleLoadingScript
   };
 }
 
-export function isBranchWiseDemoTemplate(value: unknown): value is BranchWiseDemoTemplate {
-  const candidate = value as Partial<BranchWiseDemoTemplate> | undefined;
+export function isKitsuneSampleTemplate(value: unknown): value is KitsuneSampleTemplate {
+  const candidate = value as Partial<KitsuneSampleTemplate> | undefined;
   return Boolean(
     candidate &&
       candidate.version === 1 &&

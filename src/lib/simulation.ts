@@ -219,7 +219,7 @@ export function generateSimulatedReport(payload: AnalysisPayload): FinalConsulta
       recommendedZones: locations.slice(0, 4),
       riskLevel: readiness.riskLevel,
       breakEvenEstimation: locations[0]
-        ? `${locations[0].district} estimated payback: ${locations[0].paybackMonths} months under demo assumptions.`
+        ? `${locations[0].district} estimated payback: ${locations[0].paybackMonths} months under current planning assumptions.`
         : "Break-even requires location data."
     },
     financialImpactSimulation: {
@@ -249,7 +249,7 @@ export function generateSimulatedReport(payload: AnalysisPayload): FinalConsulta
       channelMix: analysis.channelMix
     },
     disclaimer:
-      "Demo-level AI business analysis only. Real lease, legal, accounting, licensing, and investment decisions require professional review."
+      "AI-assisted business analysis for planning use only. Real lease, legal, accounting, licensing, and investment decisions require professional review."
   };
 }
 

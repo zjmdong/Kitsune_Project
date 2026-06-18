@@ -8,16 +8,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#17201d",
-        fern: "#153f39",
-        mint: "#d8eadf",
-        clay: "#b65345",
-        brass: "#c59a45",
-        paper: "#f6f4ee",
-        pearl: "#fbfbf8"
+        ink: "#24130a",
+        fern: "#c2410c",
+        mint: "#ffedd5",
+        clay: "#ea580c",
+        brass: "#f59e0b",
+        paper: "#fff7ed",
+        pearl: "#fffaf5"
       },
       boxShadow: {
-        panel: "0 18px 45px rgba(23, 32, 29, 0.08)"
+        panel: "0 18px 45px rgba(124, 45, 18, 0.10)"
       },
       fontFamily: {
         sans: ["var(--font-inter)", "Inter", "Segoe UI", "Arial", "sans-serif"]

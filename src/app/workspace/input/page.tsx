@@ -7,11 +7,11 @@ import { buildCsvTemplate } from "@/lib/analysis";
 import { parseSalesCsv } from "@/lib/csv";
 import { createSampleSalesRecords } from "@/lib/sample-data";
 import { formatNumber } from "@/lib/format";
-import { createDemoTemplate, isBranchWiseDemoTemplate } from "@/lib/demo-template";
+import { createSampleTemplate, isKitsuneSampleTemplate } from "@/lib/sample-template";
 import { createDefaultPayload, defaultAiConfig, goalOptions, payloadStorageKey, reportStorageKey } from "@/lib/workflow";
 import type { AiConfig, AnalysisPayload, FinancialInput, GoalOption, IntakeProfile, UploadedSource } from "@/lib/types";
 
-const agreementStorageKey = "branchwise:user-agreement-v1";
+const agreementStorageKey = "kitsune:user-agreement-v1";
 
 function inputClass() {
   return "h-11 w-full rounded-md border border-ink/12 bg-white px-3 text-sm text-ink shadow-sm transition focus:border-clay";
@@ -207,18 +207,18 @@ export default function InputPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "branchwise-sales-template.csv";
+    link.download = "kitsune-sales-template.csv";
     link.click();
     URL.revokeObjectURL(url);
   }
 
   function downloadHiddenTemplate() {
-    const template = createDemoTemplate();
+    const template = createSampleTemplate();
     const blob = new Blob([JSON.stringify(template, null, 2)], { type: "application/json;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "branchwise-hidden-demo-template.json";
+    link.download = "kitsune-internal-sample-template.json";
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -228,8 +228,8 @@ export default function InputPage() {
     try {
       const text = await file.text();
       const parsed = JSON.parse(text) as unknown;
-      if (!isBranchWiseDemoTemplate(parsed)) {
-        setError("Template file is not a valid BranchWise hidden demo template.");
+      if (!isKitsuneSampleTemplate(parsed)) {
+        setError("Template file is not a valid Kitsune sample package.");
         return;
       }
       const templateReport = parsed.payload.templateReport
@@ -325,7 +325,7 @@ export default function InputPage() {
                 Business Input Workspace
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-ink/62">
-                Fill in business context, upload evidence files, and start a real LLM analysis. Uploaded templates are only used for internal pitch rehearsal.
+                Fill in business context, upload evidence files, and start a real LLM analysis.
               </p>
             </div>
             <span className="inline-flex h-9 items-center rounded-full bg-mint px-3 text-xs font-semibold text-fern">
@@ -535,10 +535,10 @@ export default function InputPage() {
           <div className="mx-auto max-w-4xl rounded-lg border border-white/14 bg-pearl p-5 text-ink shadow-panel sm:p-7">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase text-clay">Before using BranchWise AI</p>
+                <p className="text-xs font-semibold uppercase text-clay">Before using Kitsune</p>
                 <h2 className="mt-2 text-3xl font-semibold">Use Agreement and Quick Guide</h2>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-ink/64">
-                  Please review how this demo analyzes your business data before entering the workspace.
+                  Please review how Kitsune analyzes your business data before entering the workspace.
                 </p>
               </div>
               <ShieldCheck className="h-9 w-9 text-fern" aria-hidden="true" />
@@ -559,7 +559,7 @@ export default function InputPage() {
               </section>
 
               <section className="rounded-lg border border-ink/10 bg-white p-4">
-                <h3 className="font-semibold">What BranchWise AI does</h3>
+                <h3 className="font-semibold">What Kitsune does</h3>
                 <div className="mt-3 space-y-2 text-sm leading-6 text-ink/68">
                   <p>It analyzes sales, cost, customer, product, and location evidence for SME restaurants and retailers.</p>
                   <p>It produces business health scoring, KPI charts, diagnosis, recommendations, Hong Kong expansion zones, marketing plans, and a 90-day roadmap.</p>
@@ -571,7 +571,7 @@ export default function InputPage() {
                 <h3 className="font-semibold">Data security and privacy</h3>
                 <div className="mt-3 space-y-2 text-sm leading-6 text-ink/68">
                   <p>Data is transmitted to the configured model endpoint over HTTPS/TLS when real LLM mode is used.</p>
-                  <p>The demo server does not persist uploaded business payloads to a database. Browser-stored input payloads are removed after the report is generated.</p>
+                  <p>The application server does not persist uploaded business payloads to a database. Browser-stored input payloads are removed after the report is generated.</p>
                   <p>Reports remain in local browser storage so you can export them, and can be cleared by starting a new analysis or clearing browser storage.</p>
                 </div>
               </section>
@@ -579,7 +579,7 @@ export default function InputPage() {
               <section className="rounded-lg border border-ink/10 bg-white p-4">
                 <h3 className="font-semibold">Terms and limitations</h3>
                 <div className="mt-3 space-y-2 text-sm leading-6 text-ink/68">
-                  <p>This is a demo-level business intelligence system for pitch and planning use.</p>
+                  <p>This is an AI-assisted business intelligence system for planning and decision support.</p>
                   <p>It is not legal, accounting, tax, licensing, real-estate, or investment advice.</p>
                   <p>You are responsible for ensuring you have permission to upload any business files used for analysis.</p>
                 </div>
@@ -594,7 +594,7 @@ export default function InputPage() {
                 onChange={(event) => setAgreementChecked(event.target.checked)}
               />
               <span>
-                I have read and agree to the use agreement, data handling notice, and demo limitations.
+                I have read and agree to the use agreement, data handling notice, and service limitations.
               </span>
             </label>
 
@@ -618,9 +618,9 @@ export default function InputPage() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase text-clay">Internal template loader</p>
-                <h2 className="mt-1 text-xl font-semibold">Upload pitch template</h2>
+                <h2 className="mt-1 text-xl font-semibold">Upload sample package</h2>
                 <p className="mt-2 text-sm leading-6 text-ink/62">
-                  Uploading a BranchWise template fills the form, attaches evidence files, loads the fake AI work script, and prepares the preset report.
+                  Uploading a Kitsune sample package fills the form, attaches evidence files, loads an internal analysis sequence, and prepares a preset report.
                 </p>
               </div>
               <button type="button" onClick={() => setTemplateDialogOpen(false)} className="grid h-9 w-9 place-items-center rounded-md hover:bg-paper">

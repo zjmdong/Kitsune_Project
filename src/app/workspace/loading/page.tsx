@@ -44,17 +44,17 @@ export default function LoadingPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("template") === "branchwise") {
-      void fetch("/api/demo-template")
+    if (params.get("template") === "kitsune") {
+      void fetch("/api/sample-template")
         .then((response) => response.json())
         .then((template: { payload?: AnalysisPayload }) => {
           if (template.payload && isPayload(template.payload)) {
             setPayload(template.payload);
           } else {
-            setError("Demo template could not be loaded.");
+            setError("Sample package could not be loaded.");
           }
         })
-        .catch(() => setError("Demo template could not be loaded."));
+        .catch(() => setError("Sample package could not be loaded."));
       return;
     }
 
