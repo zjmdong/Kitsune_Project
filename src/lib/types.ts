@@ -211,6 +211,8 @@ export type ScoreBreakdown = {
 export type FinalConsultantReport = {
   mode: AnalysisMode;
   generatedAt: string;
+  currencyCode?: string;
+  marketContext?: string;
   selectedGoals?: GoalOption[];
   inputSummary: string;
   executiveSummary: string;

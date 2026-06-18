@@ -1,8 +1,20 @@
-export function formatCurrency(value: number, options?: { compact?: boolean }) {
-  return new Intl.NumberFormat("en-HK", {
+const currencyLocales: Record<string, string> = {
+  HKD: "en-HK",
+  USD: "en-US",
+  SGD: "en-SG",
+  GBP: "en-GB",
+  CAD: "en-CA",
+  AUD: "en-AU",
+  JPY: "ja-JP",
+  CNY: "zh-CN"
+};
+
+export function formatCurrency(value: number, options?: { compact?: boolean; currency?: string }) {
+  const currency = options?.currency ?? "HKD";
+  return new Intl.NumberFormat(currencyLocales[currency] ?? "en-HK", {
     style: "currency",
-    currency: "HKD",
-    maximumFractionDigits: 0,
+    currency,
+    maximumFractionDigits: options?.compact ? 1 : 2,
     notation: options?.compact ? "compact" : "standard"
   }).format(value);
 }

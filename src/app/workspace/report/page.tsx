@@ -239,6 +239,11 @@ export default function ReportPage() {
   }, [report]);
 
   const showDesignBrief = Boolean(report?.selectedGoals?.includes("Branding/interior design"));
+  const currencyCode = report?.currencyCode ?? "HKD";
+
+  function money(value: number, options?: { compact?: boolean }) {
+    return formatCurrency(value, { ...options, currency: currencyCode });
+  }
 
   function exportPdf() {
     window.print();
@@ -308,7 +313,7 @@ export default function ReportPage() {
         </section>
 
         <section className="mt-5 grid gap-5 lg:grid-cols-4">
-          <HighlightCard label="Total revenue" value={formatCurrency(report.financialKpis.totalRevenue, { compact: true })} icon={TrendingUp} tone="blue" />
+          <HighlightCard label="Total revenue" value={money(report.financialKpis.totalRevenue, { compact: true })} icon={TrendingUp} tone="blue" />
           <HighlightCard label="Expansion risk" value={report.expansionAnalysis.riskLevel} icon={report.expansionAnalysis.riskLevel === "High" ? AlertTriangle : CheckCircle2} tone={riskTone(report.expansionAnalysis.riskLevel)} />
           <HighlightCard label="Profit uplift" value={formatPercent(report.financialImpactSimulation.expectedProfitIncrease)} icon={Rocket} tone={profitTone(report.financialImpactSimulation.expectedProfitIncrease)} />
           <HighlightCard label="Cost ratio" value={formatPercent(report.financialKpis.costRatio)} icon={Gauge} tone={costTone(report.financialKpis.costRatio)} />
@@ -325,15 +330,15 @@ export default function ReportPage() {
                 <AreaChart data={dailyChart}>
                   <CartesianGrid stroke="#e6e2d8" vertical={false} />
                   <XAxis dataKey="label" minTickGap={25} tick={{ fontSize: 12 }} />
-                  <YAxis tickFormatter={(value) => formatCurrency(Number(value), { compact: true })} tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <YAxis tickFormatter={(value) => money(Number(value), { compact: true })} tick={{ fontSize: 12 }} />
+                  <Tooltip formatter={(value: number) => money(value)} />
                   <Area dataKey="revenue" stroke="#2563eb" fill="#dbeafe" strokeWidth={2} name="Revenue" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <p className="rounded-md bg-paper p-3 text-sm text-ink/70">Revenue per day: {formatCurrency(report.financialKpis.revenuePerDay)}</p>
-              <p className="rounded-md bg-paper p-3 text-sm text-ink/70">Labor efficiency: {formatCurrency(report.financialKpis.laborCostEfficiency)} per employee</p>
+              <p className="rounded-md bg-paper p-3 text-sm text-ink/70">Revenue per day: {money(report.financialKpis.revenuePerDay)}</p>
+              <p className="rounded-md bg-paper p-3 text-sm text-ink/70">Labor efficiency: {money(report.financialKpis.laborCostEfficiency)} per employee</p>
               <p className="rounded-md bg-paper p-3 text-sm text-ink/70">Peak efficiency: {report.operationalKpis.peakHourEfficiency}</p>
               <p className="rounded-md bg-paper p-3 text-sm text-ink/70">Table turnover: {report.operationalKpis.tableTurnoverRate.toFixed(1)}x/day</p>
             </div>
@@ -347,7 +352,7 @@ export default function ReportPage() {
                   <CartesianGrid stroke="#e6e2d8" horizontal={false} />
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="name" width={112} tick={{ fontSize: 11 }} tickFormatter={(value) => String(value).slice(0, 17)} />
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Tooltip formatter={(value: number) => money(value)} />
                   <Bar dataKey="value" fill="#2563eb" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -370,7 +375,7 @@ export default function ReportPage() {
                         <Cell key={item.name} fill={mixColors[index % mixColors.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => formatCurrency(value, { compact: true })} />
+                    <Tooltip formatter={(value: number) => money(value, { compact: true })} />
                     <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
                   </PieChart>
                 </ResponsiveContainer>
@@ -383,7 +388,7 @@ export default function ReportPage() {
                         <Cell key={item.name} fill={mixColors[(index + 2) % mixColors.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => formatCurrency(value, { compact: true })} />
+                    <Tooltip formatter={(value: number) => money(value, { compact: true })} />
                     <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
                   </PieChart>
                 </ResponsiveContainer>
@@ -397,8 +402,8 @@ export default function ReportPage() {
               <h2 className="text-xl font-semibold">Customer analytics</h2>
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <HighlightCard label="AOV" value={formatCurrency(report.customerAnalytics.averageOrderValue)} icon={Users} />
-              <HighlightCard label="Estimated CLV" value={formatCurrency(report.customerAnalytics.estimatedLifetimeValue)} icon={Target} tone="purple" />
+              <HighlightCard label="AOV" value={money(report.customerAnalytics.averageOrderValue)} icon={Users} />
+              <HighlightCard label="Estimated CLV" value={money(report.customerAnalytics.estimatedLifetimeValue)} icon={Target} tone="purple" />
             </div>
             <p className="mt-4 rounded-md bg-paper p-3 text-sm leading-5 text-ink/70">{report.customerAnalytics.customerFrequency}</p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -518,7 +523,7 @@ export default function ReportPage() {
                     <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-fern">{zone.score}/100</span>
                   </div>
                   <p className="mt-1 text-sm text-ink/62">
-                    Rent {formatCurrency(zone.estimatedMonthlyRent)} | Payback {zone.paybackMonths} months
+                    Rent {money(zone.estimatedMonthlyRent)} | Payback {zone.paybackMonths} months
                   </p>
                 </div>
               ))}

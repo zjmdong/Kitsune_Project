@@ -30,7 +30,7 @@ export function createMarketingPlan(
       "Dinner group offer for tables of four, focused on signature mains and beverages."
     ],
     loyaltyProgram:
-      "Launch a simple points program: 1 point per HKD 10, double points at the new branch during the first 30 days, and one chef tasting reward after three visits.",
+      "Launch a simple points program: 1 point per 10 spent, double points at the new branch during the first 30 days, and one tasting reward after three visits.",
     seasonalCalendar: [
       "Month 1: soft-opening tasting nights and district partner previews.",
       "Month 2: Thai festival menu, creator visits, and office lunch sampling.",
@@ -51,7 +51,7 @@ export function createDesignBrief(profile: BusinessProfile): DesignBrief {
     interiorStyle:
       "Compact premium dining: warm amber lighting, textured ivory walls, cedar accents, efficient two-seat tables, and one camera-ready signature wall.",
     moodboardPrompt:
-      "A refined Hong Kong restaurant interior with amber lighting, cedar details, warm ivory walls, compact street-front seating, and a premium but welcoming mood.",
+      "A refined compact restaurant interior with amber lighting, cedar details, warm ivory walls, efficient seating, and a premium but welcoming mood.",
     storefrontNotes: [
       "Use a narrower menu board outside the entrance to keep the frontage clean.",
       "Place the hero dish visual near the pickup zone for delivery and takeaway conversion.",

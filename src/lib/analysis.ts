@@ -10,6 +10,11 @@ import type {
 
 const hkStaffCost = 17000;
 
+type AnalysisOptions = {
+  staffCostMonthly?: number;
+  currencyCode?: string;
+};
+
 function sum(values: number[]) {
   return values.reduce((total, value) => total + value, 0);
 }
@@ -53,7 +58,7 @@ function getTrend(series: { revenue: number }[]) {
   return first > 0 ? (last - first) / first : 0;
 }
 
-export function analyzeBusiness(records: SalesRecord[], profile: BusinessProfile): AnalysisResult {
+export function analyzeBusiness(records: SalesRecord[], profile: BusinessProfile, options: AnalysisOptions = {}): AnalysisResult {
   if (records.length === 0) {
     return {
       totalRevenue: 0,
@@ -109,7 +114,8 @@ export function analyzeBusiness(records: SalesRecord[], profile: BusinessProfile
   const dayCount = Math.max(1, dailySeries.length);
   const estimatedMonthlyRevenue = (totalRevenue / dayCount) * 30.4;
   const estimatedMonthlyCost = (totalCost / dayCount) * 30.4;
-  const payroll = profile.staffCount * hkStaffCost;
+  const staffCostMonthly = options.staffCostMonthly ?? hkStaffCost;
+  const payroll = profile.staffCount * staffCostMonthly;
   const otherOverhead = estimatedMonthlyRevenue * 0.08;
   const estimatedMonthlyProfit =
     estimatedMonthlyRevenue - estimatedMonthlyCost - profile.monthlyRent - payroll - otherOverhead;
@@ -229,20 +235,29 @@ export function calculateReadiness(analysis: AnalysisResult, profile: BusinessPr
 export function rankLocations(
   districts: DistrictMetric[],
   profile: BusinessProfile,
-  analysis: AnalysisResult
+  analysis: AnalysisResult,
+  options: AnalysisOptions = {}
 ): LocationRecommendation[] {
+  const currencyCode = options.currencyCode ?? "HKD";
+  const staffCostMonthly = options.staffCostMonthly ?? hkStaffCost;
   const budgetRentCeiling = Math.max(profile.monthlyRent * 1.05, profile.expansionBudget * 0.09);
   const monthlyRevenue = Math.max(analysis.estimatedMonthlyRevenue, profile.weeklyTransactions * profile.averageTicket * 4.3);
 
   return districts
     .map((district) => {
-      const estimatedMonthlyRent = Math.round(52000 + district.rentIndex * 1450);
+      const estimatedMonthlyRent =
+        currencyCode === "USD"
+          ? Math.round(2800 + district.rentIndex * 52)
+          : Math.round(52000 + district.rentIndex * 1450);
       const rentAffordability = Math.max(0, Math.min(100, 100 - ((estimatedMonthlyRent - budgetRentCeiling) / budgetRentCeiling) * 100));
       const competitionScore = 100 - district.competitionIndex;
       const revenuePotential = monthlyRevenue * (0.72 + district.footfallIndex / 250 + district.targetFitIndex / 400);
       const monthlyStoreProfit =
-        revenuePotential * analysis.grossMargin - estimatedMonthlyRent - profile.staffCount * 0.7 * hkStaffCost - revenuePotential * 0.1;
-      const openingCost = estimatedMonthlyRent * 5 + 650000;
+        revenuePotential * analysis.grossMargin - estimatedMonthlyRent - profile.staffCount * 0.7 * staffCostMonthly - revenuePotential * 0.1;
+      const openingCost =
+        currencyCode === "USD"
+          ? estimatedMonthlyRent * 4 + 120000
+          : estimatedMonthlyRent * 5 + 650000;
       const paybackMonths =
         monthlyStoreProfit > 0 ? Math.round((openingCost / monthlyStoreProfit) * 10) / 10 : 99;
 

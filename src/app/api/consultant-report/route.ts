@@ -44,7 +44,7 @@ async function createLiveReport(body: RequestBody): Promise<ConsultantReport | n
     topLocations: body.locations.slice(0, 3)
   };
 
-  const prompt = `You are KITSUNE, an AI business analyst for Hong Kong SME restaurant owners.
+  const prompt = `You are KITSUNE, an AI business analyst for SME restaurant and retail owners.
 Return only valid JSON matching this TypeScript shape:
 {
   "diagnosis": "string",
@@ -67,7 +67,7 @@ Return only valid JSON matching this TypeScript shape:
   },
   "disclaimer": "string"
 }
-Use practical, investor-safe language. Do not claim legal or investment certainty.
+Use the location and market context supplied in the payload. Do not default to Hong Kong unless the payload is clearly a Hong Kong business. Use practical, investor-safe language. Do not claim legal or investment certainty.
 Business payload:
 ${JSON.stringify(compactPayload, null, 2)}`;
 

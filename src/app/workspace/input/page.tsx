@@ -380,15 +380,15 @@ export default function InputPage() {
               <p className="text-xs font-semibold uppercase text-ink/50">Manual input</p>
               <h2 className="mt-1 text-xl font-semibold">Financial, Customer, and Goal Inputs</h2>
               <div className="mt-5 grid gap-3 md:grid-cols-3">
-                <TextField label="Monthly revenue" required help="Required if no sales CSV is uploaded; monthly gross sales in HKD." type="number" value={payload.financials.monthlyRevenue} onChange={(value) => updateFinancial("monthlyRevenue", value ? Number(value) : undefined)} />
-                <TextField label="Rent cost" required help="Monthly rent in HKD, used for cost ratio and expansion payback." type="number" value={payload.financials.rentCost} onChange={(value) => updateFinancial("rentCost", value ? Number(value) : undefined)} />
-                <TextField label="Labor cost" required help="Monthly payroll or staffing cost in HKD." type="number" value={payload.financials.laborCost} onChange={(value) => updateFinancial("laborCost", value ? Number(value) : undefined)} />
-                <TextField label="Ingredient/product cost" required help="Monthly COGS in HKD; for restaurants this is food and beverage cost." type="number" value={payload.financials.ingredientCost} onChange={(value) => updateFinancial("ingredientCost", value ? Number(value) : undefined)} />
-                <TextField label="Daily revenue" help="Optional average daily gross sales in HKD." type="number" value={payload.financials.dailyRevenue} onChange={(value) => updateFinancial("dailyRevenue", value ? Number(value) : undefined)} />
-                <TextField label="Morning revenue" help="Optional monthly or representative morning sales in HKD." type="number" value={payload.financials.morningRevenue} onChange={(value) => updateFinancial("morningRevenue", value ? Number(value) : undefined)} />
+                <TextField label="Monthly revenue" required help="Required if no sales CSV is uploaded; monthly gross sales in the store's local currency." type="number" value={payload.financials.monthlyRevenue} onChange={(value) => updateFinancial("monthlyRevenue", value ? Number(value) : undefined)} />
+                <TextField label="Rent cost" required help="Monthly rent in the store's local currency, used for cost ratio and expansion payback." type="number" value={payload.financials.rentCost} onChange={(value) => updateFinancial("rentCost", value ? Number(value) : undefined)} />
+                <TextField label="Labor cost" required help="Monthly payroll or staffing cost in the store's local currency." type="number" value={payload.financials.laborCost} onChange={(value) => updateFinancial("laborCost", value ? Number(value) : undefined)} />
+                <TextField label="Ingredient/product cost" required help="Monthly COGS in the store's local currency; for restaurants this is food and beverage cost." type="number" value={payload.financials.ingredientCost} onChange={(value) => updateFinancial("ingredientCost", value ? Number(value) : undefined)} />
+                <TextField label="Daily revenue" help="Optional average daily gross sales in the store's local currency." type="number" value={payload.financials.dailyRevenue} onChange={(value) => updateFinancial("dailyRevenue", value ? Number(value) : undefined)} />
+                <TextField label="Morning revenue" help="Optional monthly or representative morning sales in the store's local currency." type="number" value={payload.financials.morningRevenue} onChange={(value) => updateFinancial("morningRevenue", value ? Number(value) : undefined)} />
                 <TextField label="Lunch revenue" help="Optional lunch-period revenue used to find peak demand and pricing opportunities." type="number" value={payload.financials.lunchRevenue} onChange={(value) => updateFinancial("lunchRevenue", value ? Number(value) : undefined)} />
                 <TextField label="Dinner revenue" help="Optional dinner-period revenue used to compare time-based demand." type="number" value={payload.financials.dinnerRevenue} onChange={(value) => updateFinancial("dinnerRevenue", value ? Number(value) : undefined)} />
-                <TextField label="Utilities" help="Optional monthly utilities and overhead cost in HKD." type="number" value={payload.financials.utilitiesCost} onChange={(value) => updateFinancial("utilitiesCost", value ? Number(value) : undefined)} />
+                <TextField label="Utilities" help="Optional monthly utilities and overhead cost in the store's local currency." type="number" value={payload.financials.utilitiesCost} onChange={(value) => updateFinancial("utilitiesCost", value ? Number(value) : undefined)} />
                 <TextField label="Net profit" help="Optional monthly net profit if already known." type="number" value={payload.financials.netProfit} onChange={(value) => updateFinancial("netProfit", value ? Number(value) : undefined)} />
                 <TextField label="Gross margin %" help="Optional owner-provided gross margin percentage." type="number" value={payload.financials.grossMargin} onChange={(value) => updateFinancial("grossMargin", value ? Number(value) : undefined)} />
                 <TextField label="Waste rate %" help="Optional waste or unsold-stock percentage for profit leakage analysis." type="number" value={payload.financials.wasteRate} onChange={(value) => updateFinancial("wasteRate", value ? Number(value) : undefined)} />
@@ -397,7 +397,7 @@ export default function InputPage() {
                 <TextField label="Repeat customer rate %" help="Optional estimated repeat customer share." type="number" value={payload.profile.repeatCustomerRate} onChange={(value) => updateProfile("repeatCustomerRate", value ? Number(value) : undefined)} />
               </div>
               <div className="mt-3 grid gap-3 md:grid-cols-2">
-                <TextField label="Average spend per customer" help="Optional average order value in HKD." type="number" value={payload.profile.averageSpendPerCustomer} onChange={(value) => updateProfile("averageSpendPerCustomer", value ? Number(value) : undefined)} />
+                <TextField label="Average spend per customer" help="Optional average order value in the store's local currency." type="number" value={payload.profile.averageSpendPerCustomer} onChange={(value) => updateProfile("averageSpendPerCustomer", value ? Number(value) : undefined)} />
                 <TextField label="Customer segments" help="Target customer groups, for example office workers, families, tourists." value={payload.profile.customerSegments} onChange={(value) => updateProfile("customerSegments", String(value))} />
                 <TextField label="Marketing channels" help="Optional current channels such as Instagram, TikTok, Google Maps, or flyers." value={payload.profile.marketingChannels} onChange={(value) => updateProfile("marketingChannels", String(value))} />
                 <TextField label="Overstock / unsold issues" help="Optional note about slow-moving inventory, waste, or unsold products." value={payload.financials.overstockIssues} onChange={(value) => updateFinancial("overstockIssues", String(value))} />
@@ -577,7 +577,7 @@ export default function InputPage() {
                 <h3 className="font-semibold">What KITSUNE does</h3>
                 <div className="mt-3 space-y-2 text-sm leading-6 text-ink/68">
                   <p>It analyzes sales, cost, customer, product, and location evidence for SME restaurants and retailers.</p>
-                  <p>It produces business health scoring, KPI charts, diagnosis, recommendations, Hong Kong expansion zones, marketing plans, and a 90-day roadmap.</p>
+                  <p>It produces business health scoring, KPI charts, diagnosis, recommendations, local expansion zones, marketing plans, and a 90-day roadmap.</p>
                   <p>Branding and interior design advice is generated only when you select that goal.</p>
                 </div>
               </section>

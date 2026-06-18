@@ -1,4 +1,5 @@
 import { analyzeBusiness, calculateReadiness, rankLocations } from "./analysis";
+import { getDistrictMetricsForPayload, getExpansionBudget, getMarketLabel, getMonthlyStaffCost, inferCurrencyCode } from "./market";
 import { createDesignBrief, createMarketingPlan } from "./report";
 import { createSampleSalesRecords, districtMetrics } from "./sample-data";
 import type {
@@ -14,7 +15,7 @@ function clamp(value: number, min = 0, max = 100) {
   return Math.max(min, Math.min(max, Number.isFinite(value) ? value : min));
 }
 
-function toBusinessProfile(payload: AnalysisPayload): BusinessProfile {
+function toBusinessProfile(payload: AnalysisPayload, currencyCode: string): BusinessProfile {
   const monthlyRevenue =
     payload.financials.monthlyRevenue ?? (payload.financials.dailyRevenue ? payload.financials.dailyRevenue * 30 : 780000);
   const averageTicket =
@@ -31,7 +32,7 @@ function toBusinessProfile(payload: AnalysisPayload): BusinessProfile {
     staffCount: payload.profile.employees,
     weeklyTransactions: Math.round((payload.profile.dailyCustomerCount ?? 150) * 7),
     averageTicket,
-    expansionBudget: 1450000,
+    expansionBudget: getExpansionBudget(currencyCode),
     targetCustomer: payload.profile.customerSegments,
     ownerGoal: payload.profile.goals.join(", ")
   };
@@ -105,11 +106,17 @@ function buildConsultingNotes(
 }
 
 export function generateSimulatedReport(payload: AnalysisPayload): FinalConsultantReport {
-  const profile = toBusinessProfile(payload);
+  const currencyCode = inferCurrencyCode(payload);
+  const marketContext = getMarketLabel(payload);
+  const staffCostMonthly = getMonthlyStaffCost(payload, currencyCode);
+  const profile = toBusinessProfile(payload, currencyCode);
   const records = prepareRecords(payload);
-  const analysis = analyzeBusiness(records, profile);
+  const analysis = analyzeBusiness(records, profile, { staffCostMonthly, currencyCode });
   const readiness = calculateReadiness(analysis, profile);
-  const locations = rankLocations(districtMetrics, profile, analysis);
+  const locations = rankLocations(getDistrictMetricsForPayload(payload, districtMetrics), profile, analysis, {
+    staffCostMonthly,
+    currencyCode
+  });
   const marketingStrategy = createMarketingPlan(profile, analysis, locations);
   const designBrief = createDesignBrief(profile);
   const monthlyRevenue = payload.financials.monthlyRevenue ?? analysis.estimatedMonthlyRevenue;
@@ -132,6 +139,8 @@ export function generateSimulatedReport(payload: AnalysisPayload): FinalConsulta
   return {
     mode: payload.mode === "real" ? "real" : "template",
     generatedAt: new Date().toISOString(),
+    currencyCode,
+    marketContext,
     selectedGoals: payload.profile.goals,
     inputSummary: `${payload.profile.businessName} is a ${payload.profile.businessSize.toLowerCase()} ${payload.profile.businessType.toLowerCase()} in ${payload.profile.city}, ${payload.profile.area}, targeting ${payload.profile.customerSegments}.`,
     executiveSummary:
@@ -239,7 +248,7 @@ export function generateSimulatedReport(payload: AnalysisPayload): FinalConsulta
       "Sales records were grouped by date, hour, product, category, and channel.",
       "Revenue, cost, gross margin, product contribution, and customer signals were converted into KPI cards and charts.",
       "Expansion readiness was scored from trend strength, rent pressure, profit buffer, and operational capacity.",
-      "Hong Kong location recommendations were ranked with rent, footfall, competition, transit, and target-fit signals.",
+      `${marketContext} location recommendations were ranked with rent, footfall, competition, transit, and target-fit signals.`,
       "Marketing and roadmap recommendations were generated from the owner goals and identified bottlenecks."
     ],
     charts: {
@@ -259,6 +268,8 @@ export function normalizeFinalReport(value: Partial<FinalConsultantReport>, fall
     ...value,
     mode: value.mode ?? fallback.mode,
     selectedGoals: value.selectedGoals ?? fallback.selectedGoals,
+    currencyCode: fallback.currencyCode ?? value.currencyCode,
+    marketContext: fallback.marketContext ?? value.marketContext,
     businessHealthScore: { ...fallback.businessHealthScore, ...value.businessHealthScore },
     financialKpis: { ...fallback.financialKpis, ...value.financialKpis },
     operationalKpis: { ...fallback.operationalKpis, ...value.operationalKpis },
