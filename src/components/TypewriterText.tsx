@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 
 function getTypeDelay(character: string) {
-  if (character === ".") return 360;
-  if (character === " ") return 70;
-  return 92;
+  if (character === ".") return 300;
+  if (character === " ") return 58;
+  return 78;
 }
 
 export function TypewriterText({ brandText, sloganText }: { brandText: string; sloganText: string }) {
@@ -33,7 +33,7 @@ export function TypewriterText({ brandText, sloganText }: { brandText: string; s
       for (let index = text.length - 1; index >= 0; index -= 1) {
         if (cancelled) return;
         setVisibleText(text.slice(0, index));
-        await wait(56);
+        await wait(46);
       }
     }
 
