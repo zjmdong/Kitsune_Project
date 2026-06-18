@@ -245,7 +245,7 @@ function fallbackAfterModelIssue(
     visibleAnalysisLog: [
       ...(fallbackShape.visibleAnalysisLog ?? []),
       `The configured LLM did not complete the narrative pass: ${reason}`,
-      "Kitsune completed the report with the deterministic KPI, scoring, location, and roadmap engine so the owner can continue reviewing results."
+      "KITSUNE completed the report with the deterministic KPI, scoring, location, and roadmap engine so the owner can continue reviewing results."
     ].slice(0, 8),
     modelDiagnostics: {
       promptVersion,
@@ -290,7 +290,7 @@ export async function runRealAnalysis(
       {
         role: "system",
         content:
-          "You are Kitsune. Return only valid JSON for the requested consultant report. Do not expose hidden chain-of-thought."
+          "You are KITSUNE. Return only valid JSON for the requested consultant report. Do not expose hidden chain-of-thought."
       },
       {
         role: "user",
@@ -317,15 +317,15 @@ export async function runRealAnalysis(
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Network request failed.";
-    emitProgress(onEvent, 92, "Completing with KPI engine", "The model connection did not finish in time, so the report is being completed with the deterministic Kitsune analysis engine.");
+    emitProgress(onEvent, 92, "Completing with KPI engine", "The model connection did not finish in time, so the report is being completed with the deterministic KITSUNE analysis engine.");
     return fallbackAfterModelIssue(fallbackShape, payload, provider, model, `Model connection failed before a response was received: ${message}`);
   }
 
   emitProgress(onEvent, 42, "Thinking", `The model endpoint responded with HTTP ${response.status}; reading the streamed report payload now.`);
   if (!response.ok) {
     const rawText = await response.text();
-    emitOutput(onEvent, "system", `- Model endpoint returned an error\n  HTTP ${response.status}. The system will continue with the deterministic Kitsune KPI engine.\n\n`);
-    emitProgress(onEvent, 92, "Completing with KPI engine", "The model endpoint returned an error, so the report is being completed with the deterministic Kitsune analysis engine.");
+    emitOutput(onEvent, "system", `- Model endpoint returned an error\n  HTTP ${response.status}. The system will continue with the deterministic KITSUNE KPI engine.\n\n`);
+    emitProgress(onEvent, 92, "Completing with KPI engine", "The model endpoint returned an error, so the report is being completed with the deterministic KITSUNE analysis engine.");
     return fallbackAfterModelIssue(fallbackShape, payload, provider, model, `Model API request failed (${response.status}): ${rawText.slice(0, 220)}`);
   }
 
@@ -334,7 +334,7 @@ export async function runRealAnalysis(
 
   const text = streamResult.content;
   if (!text.trim()) {
-    emitProgress(onEvent, 92, "Completing with KPI engine", "The model response did not contain assistant content, so the report is being completed with the deterministic Kitsune analysis engine.");
+    emitProgress(onEvent, 92, "Completing with KPI engine", "The model response did not contain assistant content, so the report is being completed with the deterministic KITSUNE analysis engine.");
     return fallbackAfterModelIssue(fallbackShape, payload, provider, model, "Model response did not contain assistant content.");
   }
 
@@ -346,7 +346,7 @@ export async function runRealAnalysis(
       emitThinking(onEvent, title.length > 8 && title.length < 70 ? title : "Model analysis note", rest.join(":").trim() || item);
     });
   } catch {
-    emitProgress(onEvent, 92, "Completing with KPI engine", "The model returned invalid report JSON, so the report is being completed with the deterministic Kitsune analysis engine.");
+    emitProgress(onEvent, 92, "Completing with KPI engine", "The model returned invalid report JSON, so the report is being completed with the deterministic KITSUNE analysis engine.");
     return fallbackAfterModelIssue(fallbackShape, payload, provider, model, `Model content was not valid report JSON: ${text.slice(0, 220)}`);
   }
 

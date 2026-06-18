@@ -1,10 +1,10 @@
-# Kitsune
+# KITSUNE
 
-Kitsune is a Next.js AI business intelligence application for Hong Kong SME restaurant and retail owners.
+KITSUNE is a Next.js AI business intelligence application for Hong Kong SME restaurant and retail owners.
 
 ## Experience Flow
 
-- `/` - product landing page with the Kitsune brand and entry point.
+- `/` - product landing page with the KITSUNE brand and entry point.
 - `/workspace/input` - business intake page with manual inputs, file uploads, real LLM mode, internal sample package loader, and advanced model configuration.
 - `/workspace/loading` - AI work page with staged progress, readable thinking updates, and automatic redirect.
 - `/workspace/report` - final consultant report with KPIs, diagnosis, recommendations, marketing strategy, expansion analysis, roadmap, and PDF export.
@@ -52,7 +52,7 @@ The input page has a small `Advanced` control at the bottom for changing endpoin
 
 ## Internal Sample Package
 
-For internal validation, click the `Business Input Workspace` title five times to open the sample package loader. Uploading a Kitsune sample package fills the form, attaches evidence files, controls the loading-page work sequence, and renders a preset report.
+For internal validation, click the `Input Your Business Info` title five times to open the sample package loader. Uploading a KITSUNE sample package fills the form, attaches evidence files, controls the loading-page work sequence, and renders a preset report.
 
 ## CSV Format
 

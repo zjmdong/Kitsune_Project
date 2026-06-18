@@ -172,12 +172,16 @@ export default function LoadingPage() {
   }, [payload, router]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-ink px-4 py-8 text-white">
-      <section className="w-full max-w-3xl rounded-lg border border-white/12 bg-white/8 p-6 shadow-panel backdrop-blur">
+    <main className="landing-shell relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-8 text-ink">
+      <div className="landing-aurora" aria-hidden="true" />
+      <div className="landing-grid" aria-hidden="true" />
+      <div className="landing-scan" aria-hidden="true" />
+
+      <section className="relative z-10 w-full max-w-3xl rounded-lg border border-white bg-white p-6 shadow-panel">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase text-brass">Step 2 of 3</p>
-            <h1 className="mt-1 text-3xl font-semibold">AI Analysis Workspace</h1>
+            <h1 className="mt-1 text-3xl font-semibold">AI Analysis IN PROGRESS</h1>
           </div>
           {error ? <AlertTriangle className="h-9 w-9 text-clay" /> : <Loader2 className="h-9 w-9 animate-spin text-brass" />}
         </div>
@@ -185,25 +189,25 @@ export default function LoadingPage() {
         <div className="mt-8">
           <div className="flex items-center justify-between text-sm">
             <span className="font-semibold">{activeStage}</span>
-            <span className="text-white/68">{progress}%</span>
+            <span className="text-ink/62">{progress}%</span>
           </div>
-          <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/12">
+          <div className="mt-3 h-3 overflow-hidden rounded-full bg-ink/10">
             <div className="h-full rounded-full bg-brass transition-all duration-300" style={{ width: `${progress}%` }} />
           </div>
         </div>
 
-        <div className="mt-6 rounded-lg bg-black/24 p-4">
-          <p className="mb-3 text-sm font-semibold text-white">Working......</p>
+        <div className="mt-6 rounded-lg border border-ink/10 bg-paper p-4">
+          <p className="mb-3 text-sm font-semibold text-ink">Working......</p>
           <div
             ref={logRef}
-            className="h-[420px] overflow-y-auto rounded-md border border-white/10 bg-black/35 p-4 font-mono text-xs leading-5 text-white/76"
+            className="h-[420px] overflow-y-auto rounded-md border border-ink/10 bg-white p-4 font-mono text-xs leading-5 text-ink/76"
           >
             <pre className="whitespace-pre-wrap break-words">{workingLog}</pre>
           </div>
         </div>
 
         {error ? (
-          <Link href="/workspace/input" className="mt-4 inline-flex h-10 items-center rounded-md bg-white px-4 text-sm font-semibold text-ink">
+          <Link href="/workspace/input" className="mt-4 inline-flex h-10 items-center rounded-md bg-ink px-4 text-sm font-semibold text-white">
             Back to input
           </Link>
         ) : null}

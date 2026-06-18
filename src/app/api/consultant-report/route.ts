@@ -44,7 +44,7 @@ async function createLiveReport(body: RequestBody): Promise<ConsultantReport | n
     topLocations: body.locations.slice(0, 3)
   };
 
-  const prompt = `You are Kitsune, an AI business analyst for Hong Kong SME restaurant owners.
+  const prompt = `You are KITSUNE, an AI business analyst for Hong Kong SME restaurant owners.
 Return only valid JSON matching this TypeScript shape:
 {
   "diagnosis": "string",

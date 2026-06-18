@@ -1,4 +1,4 @@
-# Kitsune Deployment Guide
+# KITSUNE Deployment Guide
 
 ## One-Click Local Start On Windows
 

@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Kitsune",
+  title: "KITSUNE",
   description: "AI business intelligence for SME restaurant and retail expansion."
 };
 

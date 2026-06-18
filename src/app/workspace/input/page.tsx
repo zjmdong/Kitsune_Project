@@ -3,11 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, BookOpen, Check, Database, FileSpreadsheet, HelpCircle, Lock, RefreshCw, Settings2, ShieldCheck, Upload, X } from "lucide-react";
-import { buildCsvTemplate } from "@/lib/analysis";
 import { parseSalesCsv } from "@/lib/csv";
-import { createSampleSalesRecords } from "@/lib/sample-data";
 import { formatNumber } from "@/lib/format";
-import { createSampleTemplate, isKitsuneSampleTemplate } from "@/lib/sample-template";
+import { createSampleTemplate, isKITSUNESampleTemplate } from "@/lib/sample-template";
 import { createDefaultPayload, defaultAiConfig, goalOptions, payloadStorageKey, reportStorageKey } from "@/lib/workflow";
 import type { AiConfig, AnalysisPayload, FinancialInput, GoalOption, IntakeProfile, UploadedSource } from "@/lib/types";
 
@@ -123,7 +121,6 @@ export default function InputPage() {
   const [agreementOpen, setAgreementOpen] = useState(true);
   const [agreementChecked, setAgreementChecked] = useState(false);
 
-  const hasTemplateLoaded = payload.mode === "template";
   const configReady = useMemo(() => Boolean(payload.aiConfig?.baseUrl && payload.aiConfig?.model), [payload.aiConfig]);
 
   useEffect(() => {
@@ -203,7 +200,7 @@ export default function InputPage() {
   }
 
   function downloadCsvTemplate() {
-    const blob = new Blob([buildCsvTemplate(createSampleSalesRecords())], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob(["date,hour,product,category,units,revenue,cost,channel\n"], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -228,8 +225,8 @@ export default function InputPage() {
     try {
       const text = await file.text();
       const parsed = JSON.parse(text) as unknown;
-      if (!isKitsuneSampleTemplate(parsed)) {
-        setError("Template file is not a valid Kitsune sample package.");
+      if (!isKITSUNESampleTemplate(parsed)) {
+        setError("Template file is not a valid KITSUNE sample package.");
         return;
       }
       const templateReport = parsed.payload.templateReport
@@ -322,15 +319,12 @@ export default function InputPage() {
           <div className="mt-1 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="select-none text-3xl font-semibold" onClick={handleTitleClick}>
-                Business Input Workspace
+                Input Your Business Info
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-ink/62">
                 Fill in business context, upload evidence files, and start a real LLM analysis.
               </p>
             </div>
-            <span className="inline-flex h-9 items-center rounded-full bg-mint px-3 text-xs font-semibold text-fern">
-              {hasTemplateLoaded ? "Evidence package loaded" : "LLM analysis ready"}
-            </span>
           </div>
         </header>
 
@@ -468,11 +462,8 @@ export default function InputPage() {
               <p className="text-xs font-semibold uppercase text-ink/50">Input coverage</p>
               <h2 className="mt-1 text-xl font-semibold">Required vs Optional</h2>
               <div className="mt-4 space-y-3 text-sm leading-6 text-ink/68">
-                <p><span className="font-semibold text-clay">*</span> means required for a reliable real analysis.</p>
-                <p><strong className="text-ink">Required manual:</strong> business profile, location, staff count, operating model, and goals.</p>
-                <p><strong className="text-ink">Required evidence:</strong> sales CSV or the core monthly revenue/cost fields.</p>
-                <p><strong className="text-ink">Optional manual:</strong> gross margin, utilities, seating, peak hours, repeat rate, customer segments.</p>
-                <p><strong className="text-ink">Optional upload:</strong> product, inventory, marketing, and cost files for richer context.</p>
+                <p><span className="font-semibold text-clay">*</span> means the field is required before analysis can begin.</p>
+                <p>Please complete all available fields and upload relevant evidence whenever possible. The more complete your data is, the more accurate, specific, and actionable the generated report will be.</p>
               </div>
             </Card>
           </aside>
@@ -535,10 +526,10 @@ export default function InputPage() {
           <div className="mx-auto max-w-4xl rounded-lg border border-white/14 bg-pearl p-5 text-ink shadow-panel sm:p-7">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase text-clay">Before using Kitsune</p>
+                <p className="text-xs font-semibold uppercase text-clay">Before using KITSUNE</p>
                 <h2 className="mt-2 text-3xl font-semibold">Use Agreement and Quick Guide</h2>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-ink/64">
-                  Please review how Kitsune analyzes your business data before entering the workspace.
+                  Please review how KITSUNE analyzes your business data before entering the workspace.
                 </p>
               </div>
               <ShieldCheck className="h-9 w-9 text-fern" aria-hidden="true" />
@@ -559,7 +550,7 @@ export default function InputPage() {
               </section>
 
               <section className="rounded-lg border border-ink/10 bg-white p-4">
-                <h3 className="font-semibold">What Kitsune does</h3>
+                <h3 className="font-semibold">What KITSUNE does</h3>
                 <div className="mt-3 space-y-2 text-sm leading-6 text-ink/68">
                   <p>It analyzes sales, cost, customer, product, and location evidence for SME restaurants and retailers.</p>
                   <p>It produces business health scoring, KPI charts, diagnosis, recommendations, Hong Kong expansion zones, marketing plans, and a 90-day roadmap.</p>
@@ -620,7 +611,7 @@ export default function InputPage() {
                 <p className="text-xs font-semibold uppercase text-clay">Internal template loader</p>
                 <h2 className="mt-1 text-xl font-semibold">Upload sample package</h2>
                 <p className="mt-2 text-sm leading-6 text-ink/62">
-                  Uploading a Kitsune sample package fills the form, attaches evidence files, loads an internal analysis sequence, and prepares a preset report.
+                  Uploading a KITSUNE sample package fills the form, attaches evidence files, loads an internal analysis sequence, and prepares a preset report.
                 </p>
               </div>
               <button type="button" onClick={() => setTemplateDialogOpen(false)} className="grid h-9 w-9 place-items-center rounded-md hover:bg-paper">

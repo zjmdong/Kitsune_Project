@@ -5,7 +5,7 @@ export const promptVersion = "kitsune-analysis-v1";
 export const analysisWorkflow = [
   "Validate required owner inputs and uploaded evidence.",
   "Normalize business profile, financial fields, sales records, and supporting files.",
-  "Ask the configured LLM to produce a structured consultant report in the Kitsune JSON contract.",
+  "Ask the configured LLM to produce a structured consultant report in the KITSUNE JSON contract.",
   "Parse and validate the model response against the report shape used by the UI.",
   "Render KPI charts, expansion analysis, marketing plan, roadmap, and optional design brief."
 ];
@@ -103,7 +103,7 @@ export function buildAnalysisPrompt(payload: AnalysisPayload, fallbackShape: Fin
     visibleAnalysisLog: ["5 concise model-visible work notes"]
   };
 
-  return `You are Kitsune, a senior business analyst for Hong Kong SME restaurant and retail owners.
+  return `You are KITSUNE, a senior business analyst for Hong Kong SME restaurant and retail owners.
 
 Task:
 Produce a business consultant report for a business owner who wants revenue growth, cost control, marketing improvement, and possibly expansion into a chain.

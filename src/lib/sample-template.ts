@@ -6,7 +6,7 @@ import type { AnalysisPayload, LoadingStep } from "./types";
 export const localMoodboardPath = "/kitsune-moodboard.png";
 export const localMoodboardFilePath = "C:/Users/zjmdong/Documents/HKU_AI-in-Business/public/kitsune-moodboard.png";
 
-export type KitsuneSampleTemplate = {
+export type KITSUNESampleTemplate = {
   templateName: string;
   version: 1;
   payload: AnalysisPayload;
@@ -58,7 +58,7 @@ export const sampleLoadingScript: LoadingStep[] = [
   }
 ];
 
-export function createSampleTemplate(): KitsuneSampleTemplate {
+export function createSampleTemplate(): KITSUNESampleTemplate {
   const salesRecords = createSampleSalesRecords();
   const payload: AnalysisPayload = {
     mode: "template",
@@ -122,7 +122,7 @@ export function createSampleTemplate(): KitsuneSampleTemplate {
   report.designBrief.imagePath = localMoodboardPath;
 
   return {
-    templateName: "Kitsune internal sample package",
+    templateName: "KITSUNE internal sample package",
     version: 1,
     payload: {
       ...payload,
@@ -136,8 +136,8 @@ export function createSampleTemplate(): KitsuneSampleTemplate {
   };
 }
 
-export function isKitsuneSampleTemplate(value: unknown): value is KitsuneSampleTemplate {
-  const candidate = value as Partial<KitsuneSampleTemplate> | undefined;
+export function isKITSUNESampleTemplate(value: unknown): value is KITSUNESampleTemplate {
+  const candidate = value as Partial<KITSUNESampleTemplate> | undefined;
   return Boolean(
     candidate &&
       candidate.version === 1 &&

@@ -42,7 +42,7 @@ export function createMarketingPlan(
 export function createDesignBrief(profile: BusinessProfile): DesignBrief {
   return {
     palette: [
-      { name: "Kitsune Orange", hex: "#ea580c" },
+      { name: "KITSUNE Orange", hex: "#ea580c" },
       { name: "Amber Glow", hex: "#f59e0b" },
       { name: "Cedar Brown", hex: "#7c2d12" },
       { name: "Warm Ivory", hex: "#fff7ed" },

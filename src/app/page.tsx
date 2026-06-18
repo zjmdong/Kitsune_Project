@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Network } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export default function Home() {
   return (
@@ -11,10 +11,10 @@ export default function Home() {
       <header className="absolute inset-x-0 top-0 z-10 border-b border-white/10 bg-white/7 backdrop-blur-xl">
         <div className="mx-auto flex h-[72px] max-w-7xl items-center px-5">
           <Link href="/" className="inline-flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-md border border-white/14 bg-white/12 shadow-panel">
-              <Network className="h-5 w-5 text-orange-100" aria-hidden="true" />
+            <span className="grid h-11 w-11 place-items-center overflow-hidden rounded-md border border-white/14 bg-white/90 shadow-panel">
+              <img src="/kitsune-logo.png" alt="KITSUNE logo" className="h-9 w-9 object-contain" />
             </span>
-            <span className="text-lg font-semibold tracking-normal">Kitsune</span>
+            <span className="text-lg font-semibold tracking-normal">KITSUNE</span>
           </Link>
         </div>
       </header>
