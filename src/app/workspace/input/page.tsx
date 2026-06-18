@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, BookOpen, Check, Database, FileSpreadsheet, HelpCircle, Lock, RefreshCw, Settings2, ShieldCheck, Upload, X } from "lucide-react";
 import { parseSalesCsv } from "@/lib/csv";
 import { formatNumber } from "@/lib/format";
-import { createSampleTemplate, isKITSUNESampleTemplate } from "@/lib/sample-template";
+import { createPresetSampleTemplate, createSampleTemplate, isKITSUNESampleTemplate } from "@/lib/sample-template";
 import { createDefaultPayload, defaultAiConfig, goalOptions, payloadStorageKey, reportStorageKey } from "@/lib/workflow";
 import type { AiConfig, AnalysisPayload, FinancialInput, GoalOption, IntakeProfile, UploadedSource } from "@/lib/types";
 
@@ -220,6 +220,17 @@ export default function InputPage() {
     URL.revokeObjectURL(url);
   }
 
+  function downloadPresetTemplate() {
+    const template = createPresetSampleTemplate();
+    const blob = new Blob([JSON.stringify(template, null, 2)], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "kitsune-preset-report-template.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function handleTemplateUpload(file: File | undefined) {
     if (!file) return;
     try {
@@ -229,16 +240,39 @@ export default function InputPage() {
         setError("Template file is not a valid KITSUNE sample package.");
         return;
       }
-      setPayload({
-        ...parsed.payload,
-        mode: "real",
-        loadingScript: undefined,
-        templateReport: undefined,
-        templateAssets: undefined,
-        aiConfig: parsed.payload.aiConfig ?? payload.aiConfig ?? defaultAiConfig
-      });
+      const canUsePresetTemplate = Boolean(parsed.payload.mode === "template" && parsed.payload.templateReport);
+      const nextPayload: AnalysisPayload = canUsePresetTemplate
+        ? {
+            ...parsed.payload,
+            mode: "template",
+            loadingScript: parsed.loadingScript ?? parsed.payload.loadingScript,
+            templateReport: parsed.payload.templateReport
+              ? {
+                  ...parsed.payload.templateReport,
+                  designBrief: {
+                    ...parsed.payload.templateReport.designBrief,
+                    imagePath:
+                      parsed.payload.templateReport.designBrief.imagePath ??
+                      parsed.payload.templateAssets?.designBriefImagePath
+                  }
+                }
+              : undefined,
+            aiConfig: parsed.payload.aiConfig ?? payload.aiConfig ?? defaultAiConfig
+          }
+        : {
+            ...parsed.payload,
+            mode: "real",
+            loadingScript: undefined,
+            templateReport: undefined,
+            templateAssets: undefined,
+            aiConfig: parsed.payload.aiConfig ?? payload.aiConfig ?? defaultAiConfig
+          };
+
+      setPayload(nextPayload);
       setUploadMessage(
-        `${formatNumber(parsed.payload.salesRecords.length)} sample sales rows and ${parsed.payload.uploadedSources.length} supporting sources loaded for real analysis.`
+        canUsePresetTemplate
+          ? `${formatNumber(parsed.payload.salesRecords.length)} sales rows and ${parsed.payload.uploadedSources.length} supporting sources loaded with preset report mode.`
+          : `${formatNumber(parsed.payload.salesRecords.length)} sample sales rows and ${parsed.payload.uploadedSources.length} supporting sources loaded for real analysis.`
       );
       setTemplateDialogOpen(false);
       setError("");
@@ -624,6 +658,9 @@ export default function InputPage() {
               </label>
               <button type="button" onClick={downloadHiddenTemplate} className="h-10 rounded-md border border-ink/12 bg-white px-3 text-sm font-semibold text-ink hover:border-fern">
                 Download input template
+              </button>
+              <button type="button" onClick={downloadPresetTemplate} className="h-10 rounded-md border border-clay/20 bg-clay/10 px-3 text-sm font-semibold text-clay hover:border-clay">
+                Download preset report template
               </button>
             </div>
           </div>
