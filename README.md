@@ -5,7 +5,7 @@ KITSUNE is a Next.js AI business intelligence application for Hong Kong SME rest
 ## Experience Flow
 
 - `/` - product landing page with the KITSUNE brand and entry point.
-- `/workspace/input` - business intake page with manual inputs, file uploads, real LLM mode, internal sample package loader, and advanced model configuration.
+- `/workspace/input` - business intake page with manual inputs, file uploads, real LLM mode, fast input template loader, and advanced model configuration.
 - `/workspace/loading` - AI work page with staged progress, readable thinking updates, and automatic redirect.
 - `/workspace/report` - final consultant report with KPIs, diagnosis, recommendations, marketing strategy, expansion analysis, roadmap, and PDF export.
 
@@ -50,9 +50,9 @@ KITSUNE_AI_API_KEY=your_key
 
 The input page has a small `Advanced` control at the bottom for changing endpoint/model/key.
 
-## Internal Sample Package
+## Fast Input Template
 
-For internal validation, click the `Input Your Business Info` title five times to open the sample package loader. Uploading a KITSUNE sample package fills the form, attaches evidence files, controls the loading-page work sequence, and renders a preset report.
+For live walkthroughs, click the `Input Your Business Info` title five times to open the template loader. Uploading a KITSUNE input template fills the form and attaches sample evidence records only. The following analysis, loading page, and consultant report still run through the real analysis workflow.
 
 ## CSV Format
 

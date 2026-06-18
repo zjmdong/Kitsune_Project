@@ -1,67 +1,17 @@
 import { createSampleSalesRecords, sampleProfile } from "./sample-data";
-import { generateSimulatedReport } from "./simulation";
 import { defaultAiConfig } from "./workflow";
-import type { AnalysisPayload, LoadingStep } from "./types";
-
-export const localMoodboardPath = "/kitsune-moodboard.png";
-export const localMoodboardFilePath = "C:/Users/zjmdong/Documents/HKU_AI-in-Business/public/kitsune-moodboard.png";
+import type { AnalysisPayload } from "./types";
 
 export type KITSUNESampleTemplate = {
   templateName: string;
   version: 1;
   payload: AnalysisPayload;
-  loadingScript: LoadingStep[];
 };
-
-export const sampleLoadingScript: LoadingStep[] = [
-  {
-    progress: 8,
-    stage: "Reading uploaded sales evidence",
-    thought: "I found 84 days of transaction-level sales records and mapped revenue, cost, products, hours, and channels.",
-    durationMs: 700
-  },
-  {
-    progress: 22,
-    stage: "Reconstructing business profile",
-    thought: "The store behaves like a premium single-location Thai restaurant with strong lunch and dinner demand.",
-    durationMs: 850
-  },
-  {
-    progress: 39,
-    stage: "Computing financial and operational KPIs",
-    thought: "Gross margin is healthy, but rent, payroll, and off-peak utilization create pressure on operating buffer.",
-    durationMs: 900
-  },
-  {
-    progress: 57,
-    stage: "Diagnosing bottlenecks and profit leakage",
-    thought: "The main constraint is not demand. It is menu complexity, off-peak labor deployment, and weak repeat-customer capture.",
-    durationMs: 1000
-  },
-  {
-    progress: 74,
-    stage: "Scoring expansion readiness",
-    thought: "The store can test a second branch if the team uses a staged lease decision and protects payback discipline.",
-    durationMs: 900
-  },
-  {
-    progress: 88,
-    stage: "Building the marketing and location plan",
-    thought: "Kwun Tong and Sha Tin are stronger pilot zones than high-rent flagship districts for this second-store stage.",
-    durationMs: 850
-  },
-  {
-    progress: 100,
-    stage: "Finalizing consultant report",
-    thought: "I am assembling the executive summary, KPI tables, action roadmap, expansion analysis, and PDF-ready report.",
-    durationMs: 700
-  }
-];
 
 export function createSampleTemplate(): KITSUNESampleTemplate {
   const salesRecords = createSampleSalesRecords();
   const payload: AnalysisPayload = {
-    mode: "template",
+    mode: "real",
     profile: {
       businessName: sampleProfile.businessName,
       businessType: "Restaurant",
@@ -102,37 +52,26 @@ export function createSampleTemplate(): KITSUNESampleTemplate {
         kind: "sales",
         name: "kitsune-sample-sales.csv",
         rowCount: salesRecords.length,
-        notes: "Template-loaded sales records for internal product validation."
+        notes: "Sample sales records for fast input during a live walkthrough."
       },
       {
         kind: "inventory",
         name: "kitsune-sample-inventory-summary.xlsx",
-        notes: "Template context: weekday starter overstock and dessert waste signals."
+        notes: "Sample context: weekday starter overstock and dessert waste signals."
       },
       {
         kind: "marketing",
         name: "kitsune-sample-marketing-notes.pdf",
-        notes: "Template context: Instagram/TikTok/offline traffic mix and launch campaign ideas."
+        notes: "Sample context: Instagram/TikTok/offline traffic mix and launch campaign ideas."
       }
     ],
-    aiConfig: defaultAiConfig,
-    loadingScript: sampleLoadingScript
+    aiConfig: defaultAiConfig
   };
-  const report = generateSimulatedReport(payload);
-  report.designBrief.imagePath = localMoodboardPath;
 
   return {
-    templateName: "KITSUNE internal sample package",
+    templateName: "KITSUNE fast input sample package",
     version: 1,
-    payload: {
-      ...payload,
-      templateReport: report,
-      templateAssets: {
-        designBriefImagePath: localMoodboardPath,
-        designBriefLocalPath: localMoodboardFilePath
-      }
-    },
-    loadingScript: sampleLoadingScript
+    payload
   };
 }
 
@@ -142,7 +81,6 @@ export function isKITSUNESampleTemplate(value: unknown): value is KITSUNESampleT
     candidate &&
       candidate.version === 1 &&
       candidate.payload?.profile?.businessName &&
-      candidate.payload?.templateReport &&
-      Array.isArray(candidate.loadingScript)
+      Array.isArray(candidate.payload.salesRecords)
   );
 }

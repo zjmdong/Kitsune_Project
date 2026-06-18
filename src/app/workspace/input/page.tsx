@@ -229,26 +229,16 @@ export default function InputPage() {
         setError("Template file is not a valid KITSUNE sample package.");
         return;
       }
-      const templateReport = parsed.payload.templateReport
-        ? {
-            ...parsed.payload.templateReport,
-            designBrief: {
-              ...parsed.payload.templateReport.designBrief,
-              imagePath:
-                parsed.payload.templateReport.designBrief.imagePath ??
-                parsed.payload.templateAssets?.designBriefImagePath
-            }
-          }
-        : undefined;
       setPayload({
         ...parsed.payload,
-        mode: "template",
-        loadingScript: parsed.loadingScript,
-        templateReport,
+        mode: "real",
+        loadingScript: undefined,
+        templateReport: undefined,
+        templateAssets: undefined,
         aiConfig: parsed.payload.aiConfig ?? payload.aiConfig ?? defaultAiConfig
       });
       setUploadMessage(
-        `${formatNumber(parsed.payload.salesRecords.length)} template sales rows and ${parsed.payload.uploadedSources.length} supporting sources loaded.`
+        `${formatNumber(parsed.payload.salesRecords.length)} sample sales rows and ${parsed.payload.uploadedSources.length} supporting sources loaded for real analysis.`
       );
       setTemplateDialogOpen(false);
       setError("");
@@ -608,10 +598,10 @@ export default function InputPage() {
           <div className="w-full max-w-lg rounded-lg bg-white p-5 shadow-panel">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase text-clay">Internal template loader</p>
-                <h2 className="mt-1 text-xl font-semibold">Upload sample package</h2>
+                <p className="text-xs font-semibold uppercase text-clay">Fast input loader</p>
+                <h2 className="mt-1 text-xl font-semibold">Upload input template</h2>
                 <p className="mt-2 text-sm leading-6 text-ink/62">
-                  Uploading a KITSUNE sample package fills the form, attaches evidence files, loads an internal analysis sequence, and prepares a preset report.
+                  Uploading a KITSUNE input template only fills the form and evidence records. Start Analysis will still run the real LLM workflow.
                 </p>
               </div>
               <button type="button" onClick={() => setTemplateDialogOpen(false)} className="grid h-9 w-9 place-items-center rounded-md hover:bg-paper">
@@ -621,7 +611,7 @@ export default function InputPage() {
             <div className="mt-5 grid gap-3">
               <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md bg-fern px-4 py-3 text-sm font-semibold text-white hover:bg-ink">
                 <Upload className="h-4 w-4" />
-                Upload template JSON
+                Upload input template JSON
                 <input
                   className="sr-only"
                   type="file"
@@ -633,7 +623,7 @@ export default function InputPage() {
                 />
               </label>
               <button type="button" onClick={downloadHiddenTemplate} className="h-10 rounded-md border border-ink/12 bg-white px-3 text-sm font-semibold text-ink hover:border-fern">
-                Download template file
+                Download input template
               </button>
             </div>
           </div>

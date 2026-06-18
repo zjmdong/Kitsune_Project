@@ -83,7 +83,7 @@ export default function LoadingPage() {
     async function runTemplateWorkflow() {
       const script: LoadingStep[] = activePayload.loadingScript?.length
         ? activePayload.loadingScript
-        : [{ progress: 100, stage: "Template report ready", thought: "Loaded the preset report from the uploaded template.", durationMs: 700 }];
+        : [{ progress: 100, stage: "Template payload ready", thought: "Loaded the template payload.", durationMs: 700 }];
 
       for (const step of script) {
         if (!mounted) return;
