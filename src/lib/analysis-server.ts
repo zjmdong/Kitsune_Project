@@ -1,6 +1,6 @@
 import { analysisWorkflow, buildAnalysisPrompt, extractJson, promptVersion } from "./analysis-prompt";
 import { generateSimulatedReport, normalizeFinalReport } from "./simulation";
-import type { AnalysisPayload, FinalConsultantReport } from "./types";
+import type { AnalysisPayload, FinalConsultantReport, LoadingStep } from "./types";
 
 const defaultEndpoint = "https://opencode.ai/zen/go/v1/chat/completions";
 const defaultModel = "deepseek-v4-flash";
@@ -40,12 +40,117 @@ function emitOutput(
   onEvent?.({ type: "output", channel, text });
 }
 
-function emitThinking(
+function emitStage(
   onEvent: ((event: AnalysisProgressEvent) => void) | undefined,
-  title: string,
-  body: string
+  step: LoadingStep | undefined
 ) {
-  emitOutput(onEvent, "thinking", `- ${title}\n  ${body}\n\n`);
+  if (!step) return;
+  emitProgress(onEvent, step.progress, step.stage, step.thought);
+}
+
+function formatMoney(value: number | undefined, currencyCode = "HKD") {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "unknown";
+  return new Intl.NumberFormat(currencyCode === "USD" ? "en-US" : "en-HK", {
+    style: "currency",
+    currency: currencyCode,
+    maximumFractionDigits: 0
+  }).format(value ?? 0);
+}
+
+function formatPercentValue(value: number | undefined) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "unknown";
+  return `${Math.round((value ?? 0) * 100)}%`;
+}
+
+function salesDateRange(payload: AnalysisPayload) {
+  const dates = payload.salesRecords.map((record) => record.date).filter(Boolean).sort();
+  if (!dates.length) return "no sales date range";
+  return dates[0] === dates[dates.length - 1] ? dates[0] : `${dates[0]} to ${dates[dates.length - 1]}`;
+}
+
+function listNames(items: Array<{ name?: string; district?: string }>, limit = 3) {
+  return items
+    .slice(0, limit)
+    .map((item) => item.name ?? item.district)
+    .filter(Boolean)
+    .join(", ");
+}
+
+function buildRealAnalysisScript(payload: AnalysisPayload, report: FinalConsultantReport): LoadingStep[] {
+  const currencyCode = report.currencyCode ?? "HKD";
+  const rows = payload.salesRecords.length;
+  const sourceCount = payload.uploadedSources.length;
+  const businessName = payload.profile.businessName || "this business";
+  const market = report.marketContext ?? `${payload.profile.city}, ${payload.profile.area}`;
+  const revenue = formatMoney(report.financialKpis.totalRevenue, currencyCode);
+  const revenuePerDay = formatMoney(report.financialKpis.revenuePerDay, currencyCode);
+  const aov = formatMoney(report.customerAnalytics.averageOrderValue, currencyCode);
+  const costRatio = formatPercentValue(report.financialKpis.costRatio);
+  const grossMargin = formatPercentValue(report.financialKpis.grossMargin);
+  const topProducts = listNames(report.productPerformance.topByRevenue, 3) || "top-selling products";
+  const topCategory = report.charts.categoryMix[0]?.name ?? "the leading category";
+  const topChannel = report.charts.channelMix[0]?.name ?? "the leading channel";
+  const leakage = report.consultingAnalysis.profitLeakageAnalysis[0] ?? "profit leakage is being checked against fixed costs and product mix.";
+  const topZones = listNames(report.expansionAnalysis.recommendedZones, 3) || "shortlisted districts";
+  const priority =
+    report.priorityHighlights?.profitLeakageBenchmarking?.item ??
+    report.priorityHighlights?.quickWins?.item ??
+    "the highest-impact action is being selected from revenue, cost, and expansion scenarios.";
+  const reliability = report.strategicFrameworks?.dataIntegrity.reliabilityScore;
+  const marketSizing = report.strategicFrameworks?.marketSizing?.sam ?? `local reachable demand in ${market}`;
+
+  return [
+    {
+      progress: 6,
+      stage: "Reading uploaded evidence package",
+      thought: `Loaded ${rows.toLocaleString()} sales rows from ${salesDateRange(payload)} plus ${sourceCount} supporting source${sourceCount === 1 ? "" : "s"} for ${businessName}.`
+    },
+    {
+      progress: 14,
+      stage: "Normalizing sales records",
+      thought: `Mapped date, hour, product, category, units, revenue, cost, and channel fields so KITSUNE can compare ${topCategory}, ${topChannel}, and product-level contribution.`
+    },
+    {
+      progress: 24,
+      stage: "Computing financial baseline",
+      thought: `Reconciled evidence-period revenue of ${revenue}, average daily revenue of ${revenuePerDay}, AOV of ${aov}, gross margin of ${grossMargin}, and cost ratio of ${costRatio}.`
+    },
+    {
+      progress: 35,
+      stage: "Segmenting demand patterns",
+      thought: `Identified ${topProducts} as current demand anchors and separated peak, off-peak, channel, and category behavior for diagnosis.`
+    },
+    {
+      progress: 47,
+      stage: "Diagnosing profit leakage",
+      thought: leakage
+    },
+    {
+      progress: 58,
+      stage: "Applying strategy frameworks",
+      thought: `Building TAM/SAM/SOM, competitor alternatives, SWOT+, Porter five forces, business model review, and evidence confidence for ${market}. Current reliability score: ${reliability ?? "pending"}/100.`
+    },
+    {
+      progress: 68,
+      stage: "Scoring expansion options",
+      thought: `Comparing rent pressure, audience fit, competition, transit access, and payback risk across ${topZones}.`
+    },
+    {
+      progress: 78,
+      stage: "Selecting highest-impact priorities",
+      thought: `Testing which recommendation has the largest expected business impact. Current leading priority: ${priority}`
+    },
+    {
+      progress: 88,
+      stage: "Drafting recommendations",
+      thought: `The model is turning the KPI baseline and ${marketSizing} into quick wins, operational fixes, marketing campaigns, expansion gates, and a 12-month roadmap.`
+    },
+    {
+      progress: 96,
+      stage: "Validating report structure",
+      thought: "Checking that KPI charts, strategic validation, priority highlights, location ranking, financial impact simulation, marketing plan, and PDF-ready report fields are complete."
+    }
+  ];
 }
 
 function modelText(data: ChatResponse) {
@@ -98,7 +203,8 @@ function extractDeltaText(value: unknown) {
 
 async function readStreamingModelResponse(
   response: Response,
-  onEvent: ((event: AnalysisProgressEvent) => void) | undefined
+  onEvent: ((event: AnalysisProgressEvent) => void) | undefined,
+  streamStages: LoadingStep[] = []
 ) {
   if (!response.body) {
     const text = await response.text();
@@ -113,37 +219,13 @@ async function readStreamingModelResponse(
   let rawText = "";
   let reasoningSeen = false;
   let contentStarted = false;
-  let lastProgress = 42;
-  let thinkingStep = 0;
+  let streamStageIndex = 0;
 
-  const thinkingSteps = [
-    {
-      title: "Reading business context",
-      body: "The model is checking the store profile, location, operating model, customer segments, and selected business goals."
-    },
-    {
-      title: "Analyzing sales and cost structure",
-      body: "The model is comparing revenue, rent, labor, ingredient cost, margin, and customer volume to understand the current operating baseline."
-    },
-    {
-      title: "Diagnosing bottlenecks",
-      body: "The model is looking for constraints such as underused hours, high fixed costs, weak retention, and menu or product complexity."
-    },
-    {
-      title: "Evaluating expansion readiness",
-      body: "The model is testing whether the business can support a second branch without overextending rent, staffing, or management capacity."
-    },
-    {
-      title: "Drafting recommendations",
-      body: "The model is converting the analysis into quick wins, operating improvements, strategic moves, marketing actions, and a roadmap."
-    }
-  ];
-
-  const emitNextThinkingStep = () => {
-    const step = thinkingSteps[Math.min(thinkingStep, thinkingSteps.length - 1)];
-    if (thinkingStep < thinkingSteps.length) {
-      emitThinking(onEvent, step.title, step.body);
-      thinkingStep += 1;
+  const emitNextStreamStage = () => {
+    const step = streamStages[streamStageIndex];
+    if (step) {
+      emitStage(onEvent, step);
+      streamStageIndex += 1;
     }
   };
 
@@ -158,8 +240,8 @@ async function readStreamingModelResponse(
 
       if (reasoning) {
         reasoningSeen = true;
-        if (thinkingStep === 0 || rawText.length > thinkingStep * 2600) {
-          emitNextThinkingStep();
+        if (streamStageIndex === 0 || rawText.length + content.length > streamStageIndex * 4500) {
+          emitNextStreamStage();
         }
       }
 
@@ -167,18 +249,12 @@ async function readStreamingModelResponse(
         content += contentDelta;
         if (!contentStarted) {
           contentStarted = true;
-          emitThinking(
-            onEvent,
-            "Writing consultant report",
-            "The model has finished its internal reasoning pass and is now composing the structured report fields."
-          );
+          emitNextStreamStage();
         }
       }
 
-      const nextProgress = Math.min(84, 42 + Math.floor((content.length + rawText.length) / 900));
-      if (nextProgress >= lastProgress + 4) {
-        lastProgress = nextProgress;
-        emitProgress(onEvent, nextProgress, reasoningSeen && !contentDelta ? "Thinking" : "Writing report", "The model is continuing the analysis and report generation.");
+      while (streamStageIndex < streamStages.length && rawText.length + content.length > (streamStageIndex + 1) * 6500) {
+        emitNextStreamStage();
       }
     } catch {
       rawText += `${trimmed}\n`;
@@ -220,14 +296,6 @@ function configFromPayload(payload: AnalysisPayload) {
     endpoint: config?.baseUrl || process.env.KITSUNE_AI_ENDPOINT || process.env.BRANCHWISE_AI_ENDPOINT || defaultEndpoint,
     model: config?.model || process.env.KITSUNE_AI_MODEL || process.env.BRANCHWISE_AI_MODEL || defaultModel
   };
-}
-
-function endpointLabel(endpoint: string) {
-  try {
-    return new URL(endpoint).host;
-  } catch {
-    return "configured model endpoint";
-  }
 }
 
 async function requestJsonRepair({
@@ -321,28 +389,22 @@ export async function runRealAnalysis(
   payload: AnalysisPayload,
   onEvent?: (event: AnalysisProgressEvent) => void
 ): Promise<FinalConsultantReport> {
-  emitProgress(onEvent, 5, "Reading Sales Record", "Required owner inputs, goals, sales evidence, and LLM configuration are being checked.");
-  emitThinking(
-    onEvent,
-    "Reading uploaded business inputs",
-    "The system is loading the owner profile, financial fields, selected goals, uploaded sales records, and supporting evidence."
-  );
-
   const { provider, apiKey, endpoint, model } = configFromPayload(payload);
   if (!apiKey) {
     throw new Error("Real LLM mode requires an API key. Configure it in .env.local or the advanced settings panel.");
   }
 
-  emitProgress(onEvent, 16, "Analyze your sales", `Using ${promptVersion} with ${payload.salesRecords.length} sales rows and ${payload.uploadedSources.length} uploaded source references.`);
-  emitThinking(
-    onEvent,
-    "Building analysis baseline",
-    "The system is calculating deterministic KPIs first, so the model can focus on diagnosis, expansion judgement, and action planning."
-  );
   const fallbackShape = generateSimulatedReport({ ...payload, mode: "real" });
+  const visibleScript = buildRealAnalysisScript(payload, fallbackShape);
+  emitStage(onEvent, visibleScript[0]);
+  emitStage(onEvent, visibleScript[1]);
+  emitStage(onEvent, visibleScript[2]);
+  emitStage(onEvent, visibleScript[3]);
+  emitStage(onEvent, visibleScript[4]);
+
   const prompt = buildAnalysisPrompt(payload, fallbackShape);
 
-  emitProgress(onEvent, 28, "Preparing LLM request", `Sending the structured analysis request to ${provider} (${model}) through ${endpointLabel(endpoint)}.`);
+  emitStage(onEvent, visibleScript[5]);
   const timeout = AbortSignal.timeout(180_000);
   const requestBody = {
     model,
@@ -377,46 +439,33 @@ export async function runRealAnalysis(
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Network request failed.";
-    emitProgress(onEvent, 92, "Completing with KPI engine", "The model connection did not finish in time, so the report is being completed with the deterministic KITSUNE analysis engine.");
+    emitProgress(onEvent, 92, "Completing with KPI engine", "The model connection did not finish in time. KITSUNE is completing the report with the KPI, scoring, strategy, and roadmap engine.");
     return fallbackAfterModelIssue(fallbackShape, payload, provider, model, `Model connection failed before a response was received: ${message}`);
   }
 
-  emitProgress(onEvent, 42, "Thinking", `The model endpoint responded with HTTP ${response.status}; reading the streamed report payload now.`);
   if (!response.ok) {
     const rawText = await response.text();
-    emitOutput(onEvent, "system", `- Model endpoint returned an error\n  HTTP ${response.status}. The system will continue with the deterministic KITSUNE KPI engine.\n\n`);
-    emitProgress(onEvent, 92, "Completing with KPI engine", "The model endpoint returned an error, so the report is being completed with the deterministic KITSUNE analysis engine.");
+    emitProgress(onEvent, 92, "Completing with KPI engine", "The configured model returned an error. KITSUNE is completing the report with the validated fallback analysis engine.");
     return fallbackAfterModelIssue(fallbackShape, payload, provider, model, `Model API request failed (${response.status}): ${rawText.slice(0, 220)}`);
   }
 
-  const streamResult = await readStreamingModelResponse(response, onEvent);
-  emitProgress(onEvent, 86, "Parsing LLM output", `Received ${streamResult.rawText.length.toLocaleString()} raw stream characters from the model.`);
+  const streamResult = await readStreamingModelResponse(response, onEvent, visibleScript.slice(6, 9));
 
   const text = streamResult.content;
   if (!text.trim()) {
-    emitProgress(onEvent, 92, "Completing with KPI engine", "The model response did not contain assistant content, so the report is being completed with the deterministic KITSUNE analysis engine.");
+    emitProgress(onEvent, 92, "Completing with KPI engine", "The model response did not contain a report body. KITSUNE is completing the report with the validated fallback analysis engine.");
     return fallbackAfterModelIssue(fallbackShape, payload, provider, model, "Model response did not contain assistant content.");
   }
 
   let parsed: Partial<FinalConsultantReport>;
   try {
     parsed = JSON.parse(extractJson(text)) as Partial<FinalConsultantReport>;
-    parsed.visibleAnalysisLog?.slice(0, 5).forEach((item) => {
-      const [title, ...rest] = item.split(":");
-      emitThinking(onEvent, title.length > 8 && title.length < 70 ? title : "Model analysis note", rest.join(":").trim() || item);
-    });
   } catch {
     emitProgress(onEvent, 90, "Repairing report JSON", "The model returned non-parseable JSON, so KITSUNE is asking the model to repair and complete the structured report.");
-    emitThinking(
-      onEvent,
-      "Validating output structure",
-      "The system is preserving the model's business analysis where possible while requiring a complete JSON object that the report UI can render."
-    );
 
     try {
       const repairedText = await requestJsonRepair({ endpoint, apiKey, model, prompt, invalidText: text || streamResult.rawText });
       parsed = JSON.parse(extractJson(repairedText)) as Partial<FinalConsultantReport>;
-      emitThinking(onEvent, "Recovered report JSON", "The model repaired the response into a valid report structure for final validation.");
     } catch (repairError) {
       const message = repairError instanceof Error ? repairError.message : "JSON repair failed.";
       emitProgress(onEvent, 92, "Completing with KPI engine", "The model returned invalid report JSON and repair failed, so the deterministic KITSUNE analysis engine is completing the report.");
@@ -424,7 +473,7 @@ export async function runRealAnalysis(
     }
   }
 
-  emitProgress(onEvent, 92, "Validating report", "Normalizing the model report against the chart, KPI, roadmap, and expansion schema used by the UI.");
+  emitStage(onEvent, visibleScript[9]);
   const report = normalizeFinalReport(
     {
       ...parsed,
@@ -442,6 +491,13 @@ export async function runRealAnalysis(
     { ...fallbackShape, mode: "real", selectedGoals: payload.profile.goals }
   );
 
-  emitProgress(onEvent, 100, "Opening report", "The final report has been validated and is ready for rendering.");
+  if (report.visibleAnalysisLog?.length) {
+    emitOutput(
+      onEvent,
+      "thinking",
+      `\n[Model-visible analysis notes]\n${report.visibleAnalysisLog.map((item) => `- ${item}`).join("\n")}\n`
+    );
+  }
+  emitProgress(onEvent, 100, "Opening consultant report", "The final report is ready with KPI charts, strategy validation, expansion ranking, marketing plan, and action roadmap.");
   return report;
 }
