@@ -1,14 +1,15 @@
 import type { AnalysisPayload, FinalConsultantReport, SalesRecord } from "./types";
 import { getMarketInstruction, getMarketLabel, inferCurrencyCode } from "./market";
 
-export const promptVersion = "kitsune-analysis-v3";
+export const promptVersion = "kitsune-analysis-v4";
 
 export const analysisWorkflow = [
-  "Validate required owner inputs and uploaded evidence.",
-  "Normalize business profile, financial fields, sales records, and supporting files.",
-  "Ask the configured LLM to produce a structured consultant report in the KITSUNE JSON contract.",
-  "Parse and validate the model response against the report shape used by the UI.",
-  "Render KPI charts, expansion analysis, marketing plan, roadmap, and optional design brief."
+  "Validate required owner inputs, uploaded evidence, local market, and reporting currency.",
+  "Build a deterministic evidence baseline from sales records, costs, product mix, customer signals, and owner goals.",
+  "Ask the configured LLM to interpret the baseline as a multi-role business analysis team: financial analyst, operations analyst, growth marketer, expansion strategist, and risk reviewer.",
+  "Require the LLM to select one highest-impact priority per section and explain the business impact in user-safe terms.",
+  "Parse and validate the model response against the report shape used by the UI, then fall back only for missing or invalid fields.",
+  "Render KPI charts, expansion analysis, marketing plan, roadmap, priority highlights, and optional design brief."
 ];
 
 function topRecords(records: SalesRecord[], key: keyof Pick<SalesRecord, "revenue" | "cost" | "units">) {
@@ -97,6 +98,18 @@ export function buildAnalysisPrompt(payload: AnalysisPayload, fallbackShape: Fin
       operationalImprovements: ["2-3 actions"],
       strategicMoves: ["2-3 actions"]
     },
+    financialImpactSimulation: {
+      expectedRevenueIncrease: "decimal, for example 0.12",
+      expectedCostReduction: "decimal, for example 0.07",
+      expectedProfitIncrease: "decimal, for example 0.18",
+      roiEstimation: "one concise ROI/payback interpretation"
+    },
+    actionPlanRoadmap: {
+      now: ["2-3 actions for 0-7 days"],
+      next30Days: ["2-3 actions for 7-30 days"],
+      next3Months: ["2-3 actions for 1-3 months"],
+      next12Months: ["2-3 actions for 3-12 months"]
+    },
     priorityHighlights: {
       keyInsights: { item: "copy exactly one item from keyInsights", reason: "one concise business-impact reason" },
       problemDiagnosis: { item: "copy exactly one item from problemDiagnosis", reason: "one concise business-impact reason" },
@@ -135,6 +148,15 @@ export function buildAnalysisPrompt(payload: AnalysisPayload, fallbackShape: Fin
 Task:
 Produce a business consultant report for a business owner who wants revenue growth, cost control, marketing improvement, and possibly expansion into a chain.
 
+Deep analysis method:
+1. Evidence ledger: distinguish uploaded sales evidence, owner-entered assumptions, deterministic KPI baseline, and any inference you make.
+2. Numeric audit: check currency, reporting period, revenue totals, AOV, gross margin, cost ratio, labor pressure, rent pressure, and product contribution for internal consistency.
+3. Root-cause diagnosis: connect symptoms to operational, product, customer, marketing, or expansion constraints.
+4. Scenario thinking: identify actions with the largest expected profit, revenue, cost, risk, or payback impact.
+5. Local market grounding: use the supplied city, district, customer segments, and currency; avoid importing Hong Kong assumptions unless the business is clearly in Hong Kong.
+6. Priority selection: for every list section, choose exactly one item that matters most to this business now.
+7. Final QA: before returning JSON, verify that all required keys are present, priorityHighlights items exactly match existing array items, percentages are decimals, and no hidden reasoning is exposed.
+
 Workflow:
 ${analysisWorkflow.map((step, index) => `${index + 1}. ${step}`).join("\n")}
 
@@ -149,7 +171,7 @@ Rules:
 - Keep arrays concise but business-useful.
 - The server already computes KPI charts and baseline scores, so focus on consultant interpretation, priorities, risks, marketing, expansion, and roadmap.
 - For priorityHighlights, select exactly one existing item per section based on current business impact or highest likely profit/revenue/cost improvement. Copy the selected item text exactly from the corresponding array. The reason must be a short user-safe business rationale, not hidden reasoning.
-- Keep the total JSON response short enough to complete in one pass. Do not exceed 1,200 words.
+- Complete every requested JSON field. Keep wording concise and decision-oriented, but do not omit fields just to make the answer shorter.
 
 Target JSON patch shape:
 ${JSON.stringify(targetPatchShape, null, 2)}

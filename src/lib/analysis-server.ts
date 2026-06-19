@@ -230,6 +230,66 @@ function endpointLabel(endpoint: string) {
   }
 }
 
+async function requestJsonRepair({
+  endpoint,
+  apiKey,
+  model,
+  prompt,
+  invalidText
+}: {
+  endpoint: string;
+  apiKey: string;
+  model: string;
+  prompt: string;
+  invalidText: string;
+}) {
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    signal: AbortSignal.timeout(90_000),
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You repair and complete JSON for KITSUNE reports. Return only valid JSON. Do not expose hidden chain-of-thought."
+        },
+        {
+          role: "user",
+          content: [
+            "The prior model response was not parseable JSON.",
+            "Using the original task and schema below, return a complete valid JSON patch.",
+            "Preserve business meaning where possible, complete missing fields from the task context, and ensure priorityHighlights items exactly match their source arrays.",
+            "",
+            "Original task:",
+            prompt,
+            "",
+            "Invalid model response:",
+            invalidText.slice(0, 30000)
+          ].join("\n")
+        }
+      ],
+      thinking: { type: "enabled" },
+      reasoning_effort: "max",
+      response_format: { type: "json_object" },
+      temperature: 0,
+      stream: false
+    })
+  });
+
+  if (!response.ok) {
+    const rawText = await response.text();
+    throw new Error(`JSON repair request failed (${response.status}): ${rawText.slice(0, 220)}`);
+  }
+
+  const data = (await response.json()) as ChatResponse;
+  return modelText(data);
+}
+
 function fallbackAfterModelIssue(
   fallbackShape: FinalConsultantReport,
   payload: AnalysisPayload,
@@ -283,7 +343,7 @@ export async function runRealAnalysis(
   const prompt = buildAnalysisPrompt(payload, fallbackShape);
 
   emitProgress(onEvent, 28, "Preparing LLM request", `Sending the structured analysis request to ${provider} (${model}) through ${endpointLabel(endpoint)}.`);
-  const timeout = AbortSignal.timeout(75_000);
+  const timeout = AbortSignal.timeout(180_000);
   const requestBody = {
     model,
     messages: [
@@ -300,8 +360,8 @@ export async function runRealAnalysis(
     thinking: { type: "enabled" },
     reasoning_effort: "max",
     response_format: { type: "json_object" },
-    stream: true,
-    max_tokens: 4000
+    temperature: 0.15,
+    stream: true
   };
 
   let response: Response;
@@ -346,8 +406,22 @@ export async function runRealAnalysis(
       emitThinking(onEvent, title.length > 8 && title.length < 70 ? title : "Model analysis note", rest.join(":").trim() || item);
     });
   } catch {
-    emitProgress(onEvent, 92, "Completing with KPI engine", "The model returned invalid report JSON, so the report is being completed with the deterministic KITSUNE analysis engine.");
-    return fallbackAfterModelIssue(fallbackShape, payload, provider, model, `Model content was not valid report JSON: ${text.slice(0, 220)}`);
+    emitProgress(onEvent, 90, "Repairing report JSON", "The model returned non-parseable JSON, so KITSUNE is asking the model to repair and complete the structured report.");
+    emitThinking(
+      onEvent,
+      "Validating output structure",
+      "The system is preserving the model's business analysis where possible while requiring a complete JSON object that the report UI can render."
+    );
+
+    try {
+      const repairedText = await requestJsonRepair({ endpoint, apiKey, model, prompt, invalidText: text || streamResult.rawText });
+      parsed = JSON.parse(extractJson(repairedText)) as Partial<FinalConsultantReport>;
+      emitThinking(onEvent, "Recovered report JSON", "The model repaired the response into a valid report structure for final validation.");
+    } catch (repairError) {
+      const message = repairError instanceof Error ? repairError.message : "JSON repair failed.";
+      emitProgress(onEvent, 92, "Completing with KPI engine", "The model returned invalid report JSON and repair failed, so the deterministic KITSUNE analysis engine is completing the report.");
+      return fallbackAfterModelIssue(fallbackShape, payload, provider, model, `Model content was not valid report JSON: ${text.slice(0, 220)}; repair failed: ${message}`);
+    }
   }
 
   emitProgress(onEvent, 92, "Validating report", "Normalizing the model report against the chart, KPI, roadmap, and expansion schema used by the UI.");
