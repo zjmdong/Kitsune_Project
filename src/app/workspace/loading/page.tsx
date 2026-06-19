@@ -17,6 +17,17 @@ function wait(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+function scriptWithPresentationTiming(script: LoadingStep[]) {
+  const baseTotal = script.reduce((sum, step) => sum + (step.durationMs ?? 850), 0);
+  const targetTotal = 30000 + 5000 + Math.floor(Math.random() * 10001);
+  const scale = baseTotal > 0 ? Math.max(1, targetTotal / baseTotal) : 1;
+
+  return script.map((step) => ({
+    ...step,
+    durationMs: Math.round((step.durationMs ?? 850) * scale)
+  }));
+}
+
 export default function LoadingPage() {
   const router = useRouter();
   const [payload, setPayload] = useState<AnalysisPayload | null>(null);
@@ -81,9 +92,10 @@ export default function LoadingPage() {
     let mounted = true;
 
     async function runTemplateWorkflow() {
-      const script: LoadingStep[] = activePayload.loadingScript?.length
+      const baseScript: LoadingStep[] = activePayload.loadingScript?.length
         ? activePayload.loadingScript
         : [{ progress: 100, stage: "Template payload ready", thought: "Loaded the template payload.", durationMs: 700 }];
+      const script = scriptWithPresentationTiming(baseScript);
 
       for (const step of script) {
         if (!mounted) return;
