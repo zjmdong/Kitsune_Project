@@ -54,21 +54,6 @@ export default function LoadingPage() {
   }, [workingLog]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("template") === "kitsune") {
-      void fetch("/api/sample-template")
-        .then((response) => response.json())
-        .then((template: { payload?: AnalysisPayload }) => {
-          if (template.payload && isPayload(template.payload)) {
-            setPayload(template.payload);
-          } else {
-            setError("Sample package could not be loaded.");
-          }
-        })
-        .catch(() => setError("Sample package could not be loaded."));
-      return;
-    }
-
     const raw = localStorage.getItem(payloadStorageKey);
     if (!raw) {
       setError("No analysis input found. Please return to the input page.");

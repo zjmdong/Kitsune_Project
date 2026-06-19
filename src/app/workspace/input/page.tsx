@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, BookOpen, Check, Database, FileSpreadsheet, HelpCircle, Lock, RefreshCw, Settings2, ShieldCheck, Upload, X } from "lucide-react";
 import { parseSalesCsv } from "@/lib/csv";
 import { formatNumber } from "@/lib/format";
-import { createPresetSampleTemplate, createSampleTemplate, isKITSUNESampleTemplate } from "@/lib/sample-template";
-import { createDefaultPayload, defaultAiConfig, goalOptions, payloadStorageKey, reportStorageKey } from "@/lib/workflow";
+import { createDefaultPayload, defaultAiConfig, goalOptions, isPayload, payloadStorageKey, reportStorageKey } from "@/lib/workflow";
 import type { AiConfig, AnalysisPayload, FinancialInput, GoalOption, IntakeProfile, UploadedSource } from "@/lib/types";
 
 const agreementStorageKey = "kitsune:user-agreement-v1";
@@ -39,6 +38,12 @@ function FieldLabel({
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return <section className={`rounded-lg border border-ink/10 bg-white p-5 shadow-panel ${className}`}>{children}</section>;
+}
+
+function isKITSUNEUploadPackage(value: unknown): value is { version: 1; payload: AnalysisPayload; loadingScript?: AnalysisPayload["loadingScript"] } {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as { version?: unknown; payload?: unknown };
+  return candidate.version === 1 && Boolean(candidate.payload && isPayload(candidate.payload));
 }
 
 function TextField({
@@ -199,44 +204,12 @@ export default function InputPage() {
     }));
   }
 
-  function downloadCsvTemplate() {
-    const blob = new Blob(["date,hour,product,category,units,revenue,cost,channel\n"], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "kitsune-sales-template.csv";
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function downloadHiddenTemplate() {
-    const template = createSampleTemplate();
-    const blob = new Blob([JSON.stringify(template, null, 2)], { type: "application/json;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "kitsune-internal-sample-template.json";
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function downloadPresetTemplate() {
-    const template = createPresetSampleTemplate();
-    const blob = new Blob([JSON.stringify(template, null, 2)], { type: "application/json;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "kitsune-preset-report-template.json";
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
   async function handleTemplateUpload(file: File | undefined) {
     if (!file) return;
     try {
       const text = await file.text();
       const parsed = JSON.parse(text) as unknown;
-      if (!isKITSUNESampleTemplate(parsed)) {
+      if (!isKITSUNEUploadPackage(parsed)) {
         setError("Template file is not a valid KITSUNE sample package.");
         return;
       }
@@ -472,9 +445,6 @@ export default function InputPage() {
               </div>
               <p className="mt-4 rounded-md bg-mint p-3 text-sm leading-5 text-fern">{uploadMessage}</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <button type="button" onClick={downloadCsvTemplate} className="h-10 rounded-md border border-ink/12 bg-white px-3 text-sm font-semibold text-ink hover:border-fern">
-                  Download CSV Template
-                </button>
                 <button type="button" onClick={resetForm} className="inline-flex h-10 items-center gap-2 rounded-md border border-ink/12 bg-white px-3 text-sm font-semibold text-ink hover:border-fern">
                   <RefreshCw className="h-4 w-4" />
                   Reset
@@ -656,12 +626,6 @@ export default function InputPage() {
                   }}
                 />
               </label>
-              <button type="button" onClick={downloadHiddenTemplate} className="h-10 rounded-md border border-ink/12 bg-white px-3 text-sm font-semibold text-ink hover:border-fern">
-                Download input template
-              </button>
-              <button type="button" onClick={downloadPresetTemplate} className="h-10 rounded-md border border-clay/20 bg-clay/10 px-3 text-sm font-semibold text-clay hover:border-clay">
-                Download preset report template
-              </button>
             </div>
           </div>
         </div>
