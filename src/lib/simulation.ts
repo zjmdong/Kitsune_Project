@@ -260,6 +260,14 @@ function mergeStrategicFrameworks(fallback: StrategicFrameworks, value?: Partial
   };
 }
 
+function limitExecutiveSummary(value: string, maxWords = 40) {
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  const words = trimmed.split(/\s+/);
+  if (words.length <= maxWords) return trimmed;
+  return `${words.slice(0, maxWords).join(" ").replace(/[,.!?;:]$/, "")}.`;
+}
+
 export function generateSimulatedReport(payload: AnalysisPayload): FinalConsultantReport {
   const currencyCode = inferCurrencyCode(payload);
   const marketContext = getMarketLabel(payload);
@@ -428,6 +436,7 @@ export function normalizeFinalReport(value: Partial<FinalConsultantReport>, fall
     ...fallback,
     ...value,
     mode: value.mode ?? fallback.mode,
+    executiveSummary: limitExecutiveSummary(value.executiveSummary ?? fallback.executiveSummary),
     selectedGoals: value.selectedGoals ?? fallback.selectedGoals,
     currencyCode: fallback.currencyCode ?? value.currencyCode,
     marketContext: fallback.marketContext ?? value.marketContext,

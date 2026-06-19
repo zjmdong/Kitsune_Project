@@ -76,6 +76,17 @@ function listNames(items: Array<{ name?: string; district?: string }>, limit = 3
     .join(", ");
 }
 
+function classifyReasoningStage(reasoning: string, stages: LoadingStep[], currentIndex: number) {
+  const lower = reasoning.toLowerCase();
+  const keywordStageMap = [
+    { index: 0, keywords: ["location", "district", "rent", "payback", "expansion", "lease"] },
+    { index: 1, keywords: ["priority", "impact", "profit uplift", "cost reduction", "recommendation", "quick win"] },
+    { index: 2, keywords: ["roadmap", "marketing", "campaign", "summary", "json", "report"] }
+  ];
+  const matched = keywordStageMap.find((item) => item.index >= currentIndex && item.keywords.some((keyword) => lower.includes(keyword)));
+  return matched ? stages[matched.index] : stages[currentIndex];
+}
+
 function buildRealAnalysisScript(payload: AnalysisPayload, report: FinalConsultantReport): LoadingStep[] {
   const currencyCode = report.currencyCode ?? "HKD";
   const rows = payload.salesRecords.length;
@@ -221,11 +232,11 @@ async function readStreamingModelResponse(
   let contentStarted = false;
   let streamStageIndex = 0;
 
-  const emitNextStreamStage = () => {
-    const step = streamStages[streamStageIndex];
+  const emitNextStreamStage = (reasoning = "") => {
+    const step = reasoning ? classifyReasoningStage(reasoning, streamStages, streamStageIndex) : streamStages[streamStageIndex];
     if (step) {
       emitStage(onEvent, step);
-      streamStageIndex += 1;
+      streamStageIndex = Math.max(streamStageIndex + 1, streamStages.indexOf(step) + 1);
     }
   };
 
@@ -241,7 +252,7 @@ async function readStreamingModelResponse(
       if (reasoning) {
         reasoningSeen = true;
         if (streamStageIndex === 0 || rawText.length + content.length > streamStageIndex * 4500) {
-          emitNextStreamStage();
+          emitNextStreamStage(reasoning);
         }
       }
 
@@ -344,7 +355,6 @@ async function requestJsonRepair({
       thinking: { type: "enabled" },
       reasoning_effort: "max",
       response_format: { type: "json_object" },
-      temperature: 0,
       stream: false
     })
   });
@@ -422,7 +432,6 @@ export async function runRealAnalysis(
     thinking: { type: "enabled" },
     reasoning_effort: "max",
     response_format: { type: "json_object" },
-    temperature: 0.15,
     stream: true
   };
 

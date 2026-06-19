@@ -161,4 +161,42 @@ describe("business analysis", () => {
     expect(normalized.priorityHighlights?.profitLeakageBenchmarking?.item).toBe(modelSelectedItem);
     expect(normalized.priorityHighlights?.profitLeakageBenchmarking?.reason).toContain("LLM selected");
   });
+
+  it("limits executive summary to 40 words after model normalization", () => {
+    const fallback = generateSimulatedReport({
+      mode: "real",
+      profile: {
+        businessName: "Saffron Bay Thai Kitchen",
+        businessType: "Restaurant",
+        businessSize: "Single store",
+        city: "Hong Kong",
+        area: "Wan Chai",
+        employees: 16,
+        openingHours: "11:00-22:00",
+        businessModel: "Hybrid",
+        seatingCapacity: 58,
+        peakHours: "12:00-14:00",
+        offPeakHours: "15:00-17:30",
+        dailyCustomerCount: 155,
+        repeatCustomerRate: 34,
+        averageSpendPerCustomer: 188,
+        customerSegments: "Office workers, young professionals",
+        marketingChannels: "Instagram, TikTok, Google Maps",
+        goals: ["Expand business", "Increase revenue"]
+      },
+      financials: { monthlyRevenue: 780000, rentCost: 128000, laborCost: 272000, ingredientCost: 260000 },
+      salesRecords: createSampleSalesRecords(),
+      uploadedSources: []
+    });
+
+    const normalized = normalizeFinalReport(
+      {
+        executiveSummary:
+          "This restaurant has a promising expansion story but must improve pricing, menu complexity, loyalty capture, labor planning, lease discipline, supplier control, delivery margin, manager readiness, and district sequencing before opening a second branch in a higher-risk market."
+      },
+      fallback
+    );
+
+    expect(normalized.executiveSummary.split(/\s+/).length).toBeLessThanOrEqual(40);
+  });
 });

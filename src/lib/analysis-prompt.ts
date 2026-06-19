@@ -90,7 +90,7 @@ export function compactPayloadForPrompt(payload: AnalysisPayload) {
 
 export function buildAnalysisPrompt(payload: AnalysisPayload, fallbackShape: FinalConsultantReport) {
   const targetPatchShape = {
-    executiveSummary: "one consultant-grade sentence",
+    executiveSummary: "one consultant-grade sentence, maximum 40 English words or 40 Chinese characters",
     keyInsights: ["2-4 short insight bullets"],
     problemDiagnosis: ["2-4 short diagnosis bullets"],
     consultingAnalysis: fallbackShape.consultingAnalysis,
@@ -169,6 +169,7 @@ ${analysisWorkflow.map((step, index) => `${index + 1}. ${step}`).join("\n")}
 Rules:
 - Return only valid JSON. No markdown, no code fences, no prose outside JSON.
 - Do not expose hidden chain-of-thought. Include a field named "visibleAnalysisLog" with 5-8 concise, user-safe work notes explaining what evidence you used and what conclusions were drawn.
+- executiveSummary must be maximum 40 English words. If writing Chinese, keep it within 40 Chinese characters.
 - ${marketInstruction}
 - Use ${currencyCode} as the reporting currency for any narrative references to money.
 - Treat location advice as AI-assisted planning intelligence, not legal or investment advice.
