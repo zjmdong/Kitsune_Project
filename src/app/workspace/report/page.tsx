@@ -20,8 +20,9 @@ import {
 } from "recharts";
 import { AlertTriangle, ArrowLeft, BellRing, CheckCircle2, Clock3, CreditCard, Download, FileText, Gauge, Lightbulb, MapPin, Megaphone, Palette, PieChart as PieChartIcon, Rocket, Target, TrendingUp, Users, X } from "lucide-react";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/format";
+import { isPriorityItem, selectTopPriority } from "@/lib/priorities";
 import { reportStorageKey } from "@/lib/workflow";
-import type { FinalConsultantReport } from "@/lib/types";
+import type { FinalConsultantReport, PriorityHighlight } from "@/lib/types";
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return <section className={`rounded-lg border border-ink/10 bg-white p-5 shadow-panel ${className}`}>{children}</section>;
@@ -91,55 +92,13 @@ function costTone(value: number): Tone {
   return "green";
 }
 
-function rankAnalysisItems(items: string[], section: string) {
-  const impactSignals = [
-    { keyword: "profit", weight: 18 },
-    { keyword: "margin", weight: 17 },
-    { keyword: "revenue", weight: 16 },
-    { keyword: "cost", weight: 15 },
-    { keyword: "waste", weight: 14 },
-    { keyword: "rent", weight: 13 },
-    { keyword: "payback", weight: 13 },
-    { keyword: "leak", weight: 12 },
-    { keyword: "pricing", weight: 12 },
-    { keyword: "labor", weight: 11 },
-    { keyword: "staff", weight: 11 },
-    { keyword: "risk", weight: 10 },
-    { keyword: "conversion", weight: 9 },
-    { keyword: "customer", weight: 8 },
-    { keyword: "traffic", weight: 8 },
-    { keyword: "inventory", weight: 7 }
-  ];
-  const scoredItems = items.map((item, index) => {
-    const lower = `${section} ${item}`.toLowerCase();
-    const impactScore = impactSignals.reduce((score, signal) => score + (lower.includes(signal.keyword) ? signal.weight : 0), 0);
-    const positionScore = Math.max(0, 6 - index);
+function PriorityList({ items, section, highlight }: { items: string[]; section: string; highlight?: PriorityHighlight }) {
+  const selectedHighlight = highlight ?? selectTopPriority(items, section);
 
-    return {
-      index,
-      item,
-      score: impactScore + positionScore
-    };
-  });
-  const priorityCount = items.length > 0 ? 1 : 0;
-  const priorityIndexes = new Set(
-    scoredItems
-      .slice()
-      .sort((a, b) => b.score - a.score || a.index - b.index)
-      .slice(0, priorityCount)
-      .map((item) => item.index)
-  );
-
-  return scoredItems.map(({ item, index }) => ({
-    item,
-    important: priorityIndexes.has(index)
-  }));
-}
-
-function PriorityList({ items, section }: { items: string[]; section: string }) {
   return (
     <div className="space-y-2">
-      {rankAnalysisItems(items, section).map(({ item, important }) => {
+      {items.map((item) => {
+        const important = isPriorityItem(item, selectedHighlight);
         const Icon = important ? AlertTriangle : CheckCircle2;
         return (
           <div
@@ -154,6 +113,7 @@ function PriorityList({ items, section }: { items: string[]; section: string }) 
                 {important ? "Top priority" : "Supporting"}
               </span>
               <p>{item}</p>
+              {important && selectedHighlight?.reason ? <p className="mt-1 text-xs leading-4 text-clay/85">Why: {selectedHighlight.reason}</p> : null}
             </div>
           </div>
         );
@@ -189,10 +149,10 @@ function ImpactMetric({
 
 function TimelineRoadmap({ report }: { report: FinalConsultantReport }) {
   const stages = [
-    { label: "0-7 days", items: report.actionPlanRoadmap.now, tone: "orange" as Tone },
-    { label: "7-30 days", items: report.actionPlanRoadmap.next30Days, tone: "blue" as Tone },
-    { label: "1-3 months", items: report.actionPlanRoadmap.next3Months, tone: "green" as Tone },
-    { label: "3-12 months", items: report.actionPlanRoadmap.next12Months, tone: "purple" as Tone }
+    { label: "0-7 days", items: report.actionPlanRoadmap.now, tone: "orange" as Tone, highlight: report.priorityHighlights?.roadmapNow },
+    { label: "7-30 days", items: report.actionPlanRoadmap.next30Days, tone: "blue" as Tone, highlight: report.priorityHighlights?.roadmapNext30Days },
+    { label: "1-3 months", items: report.actionPlanRoadmap.next3Months, tone: "green" as Tone, highlight: report.priorityHighlights?.roadmapNext3Months },
+    { label: "3-12 months", items: report.actionPlanRoadmap.next12Months, tone: "purple" as Tone, highlight: report.priorityHighlights?.roadmapNext12Months }
   ];
 
   return (
@@ -206,7 +166,7 @@ function TimelineRoadmap({ report }: { report: FinalConsultantReport }) {
           <div className="rounded-lg border border-ink/10 bg-paper p-4">
             <p className="text-sm font-semibold text-ink">{stage.label}</p>
             <div className="mt-3">
-              <PriorityList items={stage.items} section={`roadmap ${stage.label}`} />
+              <PriorityList items={stage.items} section={`roadmap ${stage.label}`} highlight={stage.highlight} />
             </div>
           </div>
         </div>
@@ -423,7 +383,7 @@ export default function ReportPage() {
               <h2 className="text-xl font-semibold">Key insights</h2>
             </div>
             <div className="mt-4">
-              <PriorityList items={report.keyInsights} section="key insights" />
+              <PriorityList items={report.keyInsights} section="key insights" highlight={report.priorityHighlights?.keyInsights} />
             </div>
           </Card>
           <Card>
@@ -432,7 +392,7 @@ export default function ReportPage() {
               <h2 className="text-xl font-semibold">Problem diagnosis</h2>
             </div>
             <div className="mt-4">
-              <PriorityList items={report.problemDiagnosis} section="problem diagnosis" />
+              <PriorityList items={report.problemDiagnosis} section="problem diagnosis" highlight={report.priorityHighlights?.problemDiagnosis} />
             </div>
           </Card>
         </section>
@@ -460,19 +420,23 @@ export default function ReportPage() {
             <h2 className="text-xl font-semibold">Trend and bottlenecks</h2>
             <p className="mt-3 rounded-md bg-mint p-3 text-sm leading-5 text-fern">{report.consultingAnalysis.trendAnalysis}</p>
             <div className="mt-3">
-              <PriorityList items={report.consultingAnalysis.bottleneckAnalysis} section="bottleneck analysis" />
+              <PriorityList items={report.consultingAnalysis.bottleneckAnalysis} section="bottleneck analysis" highlight={report.priorityHighlights?.bottleneckAnalysis} />
             </div>
           </Card>
           <Card>
             <h2 className="text-xl font-semibold">Profit leakage and benchmarking</h2>
             <div className="mt-3">
-              <PriorityList items={[...report.consultingAnalysis.profitLeakageAnalysis, ...report.consultingAnalysis.benchmarking]} section="profit leakage and benchmarking" />
+              <PriorityList
+                items={[...report.consultingAnalysis.profitLeakageAnalysis, ...report.consultingAnalysis.benchmarking]}
+                section="profit leakage and benchmarking"
+                highlight={report.priorityHighlights?.profitLeakageBenchmarking}
+              />
             </div>
           </Card>
           <Card>
             <h2 className="text-xl font-semibold">Scenario simulation</h2>
             <div className="mt-3">
-              <PriorityList items={report.consultingAnalysis.scenarioSimulation} section="scenario simulation" />
+              <PriorityList items={report.consultingAnalysis.scenarioSimulation} section="scenario simulation" highlight={report.priorityHighlights?.scenarioSimulation} />
             </div>
           </Card>
         </section>
@@ -481,19 +445,19 @@ export default function ReportPage() {
           <Card>
             <h2 className="text-xl font-semibold">Quick wins</h2>
             <div className="mt-4">
-              <PriorityList items={report.recommendations.quickWins} section="quick wins" />
+              <PriorityList items={report.recommendations.quickWins} section="quick wins" highlight={report.priorityHighlights?.quickWins} />
             </div>
           </Card>
           <Card>
             <h2 className="text-xl font-semibold">Operational improvements</h2>
             <div className="mt-4">
-              <PriorityList items={report.recommendations.operationalImprovements} section="operational improvements" />
+              <PriorityList items={report.recommendations.operationalImprovements} section="operational improvements" highlight={report.priorityHighlights?.operationalImprovements} />
             </div>
           </Card>
           <Card>
             <h2 className="text-xl font-semibold">Strategic moves</h2>
             <div className="mt-4">
-              <PriorityList items={report.recommendations.strategicMoves} section="strategic moves" />
+              <PriorityList items={report.recommendations.strategicMoves} section="strategic moves" highlight={report.priorityHighlights?.strategicMoves} />
             </div>
           </Card>
         </section>
@@ -506,8 +470,8 @@ export default function ReportPage() {
             </div>
             <p className="mt-3 text-sm leading-6 text-ink/68">{report.marketingStrategy.positioning}</p>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <PriorityList items={report.marketingStrategy.campaigns} section="marketing campaigns" />
-              <PriorityList items={report.marketingStrategy.socialPosts} section="social posts" />
+              <PriorityList items={report.marketingStrategy.campaigns} section="marketing campaigns" highlight={report.priorityHighlights?.marketingCampaigns} />
+              <PriorityList items={report.marketingStrategy.socialPosts} section="social posts" highlight={report.priorityHighlights?.socialPosts} />
             </div>
           </Card>
           <Card>

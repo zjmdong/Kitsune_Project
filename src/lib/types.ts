@@ -208,6 +208,29 @@ export type ScoreBreakdown = {
   growthPotential: number;
 };
 
+export type PriorityHighlightKey =
+  | "keyInsights"
+  | "problemDiagnosis"
+  | "bottleneckAnalysis"
+  | "profitLeakageBenchmarking"
+  | "scenarioSimulation"
+  | "quickWins"
+  | "operationalImprovements"
+  | "strategicMoves"
+  | "marketingCampaigns"
+  | "socialPosts"
+  | "roadmapNow"
+  | "roadmapNext30Days"
+  | "roadmapNext3Months"
+  | "roadmapNext12Months";
+
+export type PriorityHighlight = {
+  item: string;
+  reason: string;
+};
+
+export type PriorityHighlights = Partial<Record<PriorityHighlightKey, PriorityHighlight>>;
+
 export type FinalConsultantReport = {
   mode: AnalysisMode;
   generatedAt: string;
@@ -256,6 +279,7 @@ export type FinalConsultantReport = {
   };
   keyInsights: string[];
   problemDiagnosis: string[];
+  priorityHighlights?: PriorityHighlights;
   recommendations: {
     quickWins: string[];
     operationalImprovements: string[];

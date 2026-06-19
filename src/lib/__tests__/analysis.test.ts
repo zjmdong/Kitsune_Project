@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { analyzeBusiness, calculateReadiness, rankLocations } from "../analysis";
 import { districtMetrics, sampleProfile, createSampleSalesRecords } from "../sample-data";
 import { parseSalesCsv } from "../csv";
-import { generateSimulatedReport } from "../simulation";
+import { generateSimulatedReport, normalizeFinalReport } from "../simulation";
 import type { AnalysisPayload } from "../types";
 
 describe("business analysis", () => {
@@ -104,5 +104,59 @@ describe("business analysis", () => {
     expect(report.customerAnalytics.averageOrderValue).toBe(9.25);
     expect(report.expansionAnalysis.recommendedZones[0].district).not.toBe("Kwun Tong");
     expect(report.expansionAnalysis.recommendedZones.map((zone) => zone.district)).toContain("Chinatown / Spring Valley");
+  });
+
+  it("preserves model-selected top priority highlights when they match report items", () => {
+    const fallback = generateSimulatedReport({
+      mode: "real",
+      profile: {
+        businessName: "Gong Cha Las Vegas - Chinatown",
+        businessType: "Restaurant / Bubble Tea Shop",
+        businessSize: "Single store",
+        city: "Las Vegas, Nevada, USA",
+        area: "Chinatown / Spring Valley",
+        employees: 9,
+        openingHours: "11:00-22:00",
+        businessModel: "Hybrid",
+        seatingCapacity: 24,
+        peakHours: "13:00-19:00",
+        offPeakHours: "11:00-13:00; 20:30-22:00",
+        dailyCustomerCount: 217,
+        repeatCustomerRate: 42,
+        averageSpendPerCustomer: 9.25,
+        customerSegments: "Local Asian-American residents, students, tourists",
+        marketingChannels: "Instagram, TikTok, Google Maps, Uber Eats",
+        goals: ["Increase revenue", "Reduce cost", "Improve marketing"]
+      },
+      financials: {
+        monthlyRevenue: 62317.35,
+        dailyRevenue: 2010.24,
+        rentCost: 4650,
+        laborCost: 20200,
+        ingredientCost: 16427.6,
+        utilitiesCost: 1850,
+        netProfit: 8603.81,
+        grossMargin: 73.64,
+        wasteRate: 3.1
+      },
+      salesRecords: createSampleSalesRecords(),
+      uploadedSources: []
+    });
+    const modelSelectedItem = fallback.consultingAnalysis.benchmarking[0];
+
+    const normalized = normalizeFinalReport(
+      {
+        priorityHighlights: {
+          profitLeakageBenchmarking: {
+            item: modelSelectedItem,
+            reason: "LLM selected this as the highest upside benchmark gap."
+          }
+        }
+      },
+      fallback
+    );
+
+    expect(normalized.priorityHighlights?.profitLeakageBenchmarking?.item).toBe(modelSelectedItem);
+    expect(normalized.priorityHighlights?.profitLeakageBenchmarking?.reason).toContain("LLM selected");
   });
 });

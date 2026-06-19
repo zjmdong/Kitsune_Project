@@ -1,5 +1,6 @@
 import { analyzeBusiness, calculateReadiness, rankLocations } from "./analysis";
 import { getDistrictMetricsForPayload, getExpansionBudget, getMarketLabel, getMonthlyStaffCost, inferCurrencyCode } from "./market";
+import { buildPriorityHighlights, normalizePriorityHighlights } from "./priorities";
 import { createDesignBrief, createMarketingPlan } from "./report";
 import { createSampleSalesRecords, districtMetrics } from "./sample-data";
 import type {
@@ -136,7 +137,7 @@ export function generateSimulatedReport(payload: AnalysisPayload): FinalConsulta
   const growthScore = clamp(readiness.score);
   const overall = Math.round(revenueScore * 0.3 + costScore * 0.32 + growthScore * 0.38);
 
-  return {
+  const report: FinalConsultantReport = {
     mode: payload.mode === "real" ? "real" : "template",
     generatedAt: new Date().toISOString(),
     currencyCode,
@@ -260,10 +261,15 @@ export function generateSimulatedReport(payload: AnalysisPayload): FinalConsulta
     disclaimer:
       "AI-assisted business analysis for planning use only. Real lease, legal, accounting, licensing, and investment decisions require professional review."
   };
+
+  return {
+    ...report,
+    priorityHighlights: buildPriorityHighlights(report)
+  };
 }
 
 export function normalizeFinalReport(value: Partial<FinalConsultantReport>, fallback: FinalConsultantReport): FinalConsultantReport {
-  return {
+  const report: FinalConsultantReport = {
     ...fallback,
     ...value,
     mode: value.mode ?? fallback.mode,
@@ -285,5 +291,10 @@ export function normalizeFinalReport(value: Partial<FinalConsultantReport>, fall
     visibleAnalysisLog: value.visibleAnalysisLog ?? fallback.visibleAnalysisLog,
     modelDiagnostics: value.modelDiagnostics ?? fallback.modelDiagnostics,
     charts: { ...fallback.charts, ...value.charts }
+  };
+
+  return {
+    ...report,
+    priorityHighlights: normalizePriorityHighlights(report, value.priorityHighlights ?? fallback.priorityHighlights)
   };
 }

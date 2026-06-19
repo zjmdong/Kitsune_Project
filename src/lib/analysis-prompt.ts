@@ -1,7 +1,7 @@
 import type { AnalysisPayload, FinalConsultantReport, SalesRecord } from "./types";
 import { getMarketInstruction, getMarketLabel, inferCurrencyCode } from "./market";
 
-export const promptVersion = "kitsune-analysis-v2";
+export const promptVersion = "kitsune-analysis-v3";
 
 export const analysisWorkflow = [
   "Validate required owner inputs and uploaded evidence.",
@@ -97,6 +97,25 @@ export function buildAnalysisPrompt(payload: AnalysisPayload, fallbackShape: Fin
       operationalImprovements: ["2-3 actions"],
       strategicMoves: ["2-3 actions"]
     },
+    priorityHighlights: {
+      keyInsights: { item: "copy exactly one item from keyInsights", reason: "one concise business-impact reason" },
+      problemDiagnosis: { item: "copy exactly one item from problemDiagnosis", reason: "one concise business-impact reason" },
+      bottleneckAnalysis: { item: "copy exactly one item from consultingAnalysis.bottleneckAnalysis", reason: "one concise business-impact reason" },
+      profitLeakageBenchmarking: {
+        item: "copy exactly one item from consultingAnalysis.profitLeakageAnalysis or consultingAnalysis.benchmarking",
+        reason: "one concise business-impact reason"
+      },
+      scenarioSimulation: { item: "copy exactly one item from consultingAnalysis.scenarioSimulation", reason: "one concise business-impact reason" },
+      quickWins: { item: "copy exactly one item from recommendations.quickWins", reason: "one concise business-impact reason" },
+      operationalImprovements: { item: "copy exactly one item from recommendations.operationalImprovements", reason: "one concise business-impact reason" },
+      strategicMoves: { item: "copy exactly one item from recommendations.strategicMoves", reason: "one concise business-impact reason" },
+      marketingCampaigns: { item: "copy exactly one item from marketingStrategy.campaigns", reason: "one concise business-impact reason" },
+      socialPosts: { item: "copy exactly one item from marketingStrategy.socialPosts", reason: "one concise business-impact reason" },
+      roadmapNow: { item: "copy exactly one item from actionPlanRoadmap.now", reason: "one concise business-impact reason" },
+      roadmapNext30Days: { item: "copy exactly one item from actionPlanRoadmap.next30Days", reason: "one concise business-impact reason" },
+      roadmapNext3Months: { item: "copy exactly one item from actionPlanRoadmap.next3Months", reason: "one concise business-impact reason" },
+      roadmapNext12Months: { item: "copy exactly one item from actionPlanRoadmap.next12Months", reason: "one concise business-impact reason" }
+    },
     marketingStrategy: fallbackShape.marketingStrategy,
     designBrief: payload.profile.goals.includes("Branding/interior design")
       ? {
@@ -129,6 +148,7 @@ Rules:
 - Use the exact JSON key names shown in the target shape. Numeric percentages must be decimals, for example 0.12 for 12%.
 - Keep arrays concise but business-useful.
 - The server already computes KPI charts and baseline scores, so focus on consultant interpretation, priorities, risks, marketing, expansion, and roadmap.
+- For priorityHighlights, select exactly one existing item per section based on current business impact or highest likely profit/revenue/cost improvement. Copy the selected item text exactly from the corresponding array. The reason must be a short user-safe business rationale, not hidden reasoning.
 - Keep the total JSON response short enough to complete in one pass. Do not exceed 1,200 words.
 
 Target JSON patch shape:
