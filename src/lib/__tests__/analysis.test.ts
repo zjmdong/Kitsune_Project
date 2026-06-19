@@ -102,6 +102,8 @@ describe("business analysis", () => {
 
     expect(report.currencyCode).toBe("USD");
     expect(report.customerAnalytics.averageOrderValue).toBe(9.25);
+    expect(report.strategicFrameworks.dataIntegrity.reliabilityScore).toBeGreaterThan(50);
+    expect(report.strategicFrameworks.marketSizing.sam).toContain("Chinatown");
     expect(report.expansionAnalysis.recommendedZones[0].district).not.toBe("Kwun Tong");
     expect(report.expansionAnalysis.recommendedZones.map((zone) => zone.district)).toContain("Chinatown / Spring Valley");
   });

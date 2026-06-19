@@ -1,12 +1,13 @@
 import type { AnalysisPayload, FinalConsultantReport, SalesRecord } from "./types";
 import { getMarketInstruction, getMarketLabel, inferCurrencyCode } from "./market";
 
-export const promptVersion = "kitsune-analysis-v4";
+export const promptVersion = "kitsune-analysis-v5";
 
 export const analysisWorkflow = [
   "Validate required owner inputs, uploaded evidence, local market, and reporting currency.",
   "Build a deterministic evidence baseline from sales records, costs, product mix, customer signals, and owner goals.",
-  "Ask the configured LLM to interpret the baseline as a multi-role business analysis team: financial analyst, operations analyst, growth marketer, expansion strategist, and risk reviewer.",
+  "Apply strategic-analysis frameworks inspired by technical business strategy workflows: scope definition, evidence ledger, TAM/SAM/SOM, competitor alternatives, SWOT+, Porter five forces, business model review, and risk-adjusted recommendation design.",
+  "Ask the configured LLM to interpret the baseline as a multi-role business analysis team: financial analyst, operations analyst, growth marketer, expansion strategist, risk reviewer, and strategy QA reviewer.",
   "Require the LLM to select one highest-impact priority per section and explain the business impact in user-safe terms.",
   "Parse and validate the model response against the report shape used by the UI, then fall back only for missing or invalid fields.",
   "Render KPI charts, expansion analysis, marketing plan, roadmap, priority highlights, and optional design brief."
@@ -93,6 +94,7 @@ export function buildAnalysisPrompt(payload: AnalysisPayload, fallbackShape: Fin
     keyInsights: ["2-4 short insight bullets"],
     problemDiagnosis: ["2-4 short diagnosis bullets"],
     consultingAnalysis: fallbackShape.consultingAnalysis,
+    strategicFrameworks: fallbackShape.strategicFrameworks,
     recommendations: {
       quickWins: ["2-3 actions"],
       operationalImprovements: ["2-3 actions"],
@@ -149,13 +151,17 @@ Task:
 Produce a business consultant report for a business owner who wants revenue growth, cost control, marketing improvement, and possibly expansion into a chain.
 
 Deep analysis method:
-1. Evidence ledger: distinguish uploaded sales evidence, owner-entered assumptions, deterministic KPI baseline, and any inference you make.
-2. Numeric audit: check currency, reporting period, revenue totals, AOV, gross margin, cost ratio, labor pressure, rent pressure, and product contribution for internal consistency.
-3. Root-cause diagnosis: connect symptoms to operational, product, customer, marketing, or expansion constraints.
-4. Scenario thinking: identify actions with the largest expected profit, revenue, cost, risk, or payback impact.
-5. Local market grounding: use the supplied city, district, customer segments, and currency; avoid importing Hong Kong assumptions unless the business is clearly in Hong Kong.
-6. Priority selection: for every list section, choose exactly one item that matters most to this business now.
-7. Final QA: before returning JSON, verify that all required keys are present, priorityHighlights items exactly match existing array items, percentages are decimals, and no hidden reasoning is exposed.
+1. Scope and hypothesis framing: identify the business model, expansion question, local market, target segments, success metric, and constraints before making recommendations.
+2. Evidence ledger: distinguish uploaded sales evidence, owner-entered assumptions, deterministic KPI baseline, and any inference you make. Do not invent external citations.
+3. Numeric audit: check currency, reporting period, revenue totals, AOV, gross margin, cost ratio, labor pressure, rent pressure, product contribution, and payback logic for internal consistency.
+4. Market sizing: provide directional TAM/SAM/SOM reasoning using the supplied market and customer context. Mark confidence and missing evidence when third-party market data is absent.
+5. Competitive landscape: identify direct alternatives, substitutes, defensibility, and watchouts from the business context. If competitor files are not uploaded, state that this is assumption-based.
+6. Strategic frameworks: complete SWOT+, TOWS actions, Porter five forces, and business model review with practical SME actions rather than generic textbook labels.
+7. Root-cause diagnosis: connect symptoms to operational, product, customer, marketing, or expansion constraints.
+8. Scenario thinking: identify actions with the largest expected profit, revenue, cost, risk, or payback impact.
+9. Local market grounding: use the supplied city, district, customer segments, and currency; avoid importing Hong Kong assumptions unless the business is clearly in Hong Kong.
+10. Priority selection: for every list section, choose exactly one item that matters most to this business now.
+11. Final QA: before returning JSON, verify that all required keys are present, priorityHighlights items exactly match existing array items, percentages are decimals, strategicFrameworks are complete, and no hidden reasoning is exposed.
 
 Workflow:
 ${analysisWorkflow.map((step, index) => `${index + 1}. ${step}`).join("\n")}
@@ -170,6 +176,7 @@ Rules:
 - Use the exact JSON key names shown in the target shape. Numeric percentages must be decimals, for example 0.12 for 12%.
 - Keep arrays concise but business-useful.
 - The server already computes KPI charts and baseline scores, so focus on consultant interpretation, priorities, risks, marketing, expansion, and roadmap.
+- strategicFrameworks must improve reliability: identify evidence used, confidence level, missing evidence, assumption checks, competitive risk, Porter force intensity, and scalability constraints. Keep it specific to the business rather than generic.
 - For priorityHighlights, select exactly one existing item per section based on current business impact or highest likely profit/revenue/cost improvement. Copy the selected item text exactly from the corresponding array. The reason must be a short user-safe business rationale, not hidden reasoning.
 - Complete every requested JSON field. Keep wording concise and decision-oriented, but do not omit fields just to make the answer shorter.
 

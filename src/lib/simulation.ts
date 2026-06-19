@@ -9,7 +9,8 @@ import type {
   FinalConsultantReport,
   LocationRecommendation,
   RankedItem,
-  SalesRecord
+  SalesRecord,
+  StrategicFrameworks
 } from "./types";
 
 function clamp(value: number, min = 0, max = 100) {
@@ -106,6 +107,159 @@ function buildConsultingNotes(
   };
 }
 
+function confidenceFromInputs(payload: AnalysisPayload, records: SalesRecord[]) {
+  let score = 35;
+  if (records.length >= 50) score += 25;
+  if (payload.financials.monthlyRevenue) score += 10;
+  if (payload.financials.rentCost && payload.financials.laborCost && payload.financials.ingredientCost) score += 15;
+  if (payload.profile.customerSegments) score += 8;
+  if (payload.profile.marketingChannels) score += 7;
+  const reliabilityScore = clamp(score);
+  const confidenceLevel = reliabilityScore >= 76 ? "High" : reliabilityScore >= 55 ? "Medium" : "Low";
+  return { reliabilityScore: Math.round(reliabilityScore), confidenceLevel: confidenceLevel as "Low" | "Medium" | "High" };
+}
+
+function createStrategicFrameworks(
+  payload: AnalysisPayload,
+  records: SalesRecord[],
+  topLocation: LocationRecommendation | undefined,
+  costRatio: number,
+  grossMargin: number,
+  readinessScore: number,
+  marketContext: string
+): StrategicFrameworks {
+  const confidence = confidenceFromInputs(payload, records);
+  const businessCategory = payload.profile.businessType.toLowerCase();
+  const bestZone = topLocation?.district ?? payload.profile.area;
+
+  return {
+    dataIntegrity: {
+      confidenceLevel: confidence.confidenceLevel,
+      reliabilityScore: confidence.reliabilityScore,
+      evidenceUsed: [
+        `${records.length.toLocaleString()} sales rows were available for KPI and product contribution analysis.`,
+        "Owner-entered rent, labor, ingredient, customer, and marketing inputs were used as planning assumptions.",
+        `${marketContext} district metrics were used for expansion ranking and lease-risk comparison.`
+      ],
+      assumptionChecks: [
+        `Currency is inferred as ${inferCurrencyCode(payload)} from the stated market.`,
+        `Cost ratio is ${Math.round(costRatio * 100)}%, which is used as the main profitability pressure test.`,
+        `Expansion readiness score is ${Math.round(readinessScore)}/100 before lease commitment.`
+      ],
+      missingEvidence: [
+        "Competitor pricing screenshots or local review scrape would improve competitor benchmarking.",
+        "Supplier invoices and hourly payroll exports would improve cost leakage precision.",
+        "Customer cohort or loyalty data would improve retention and CLV confidence."
+      ]
+    },
+    marketSizing: {
+      tam: `${marketContext} ${businessCategory} demand across local residents, workers, students, delivery users, and visitors.`,
+      sam: `${payload.profile.area} customers reachable through the current storefront, delivery radius, Google Maps, social media, and community partnerships.`,
+      som: `Near-term share should be sized from current daily traffic of about ${payload.profile.dailyCustomerCount ?? "unknown"} customers and capacity in ${bestZone}.`,
+      confidenceLevel: confidence.confidenceLevel,
+      methodNote: "Market size is treated as directional because no third-party population, footfall, or competitor transaction dataset was uploaded."
+    },
+    competitivePositioning: {
+      directAlternatives: [
+        `Nearby ${businessCategory} stores competing for the same customer occasions.`,
+        "Delivery marketplace substitutes with stronger convenience and discounting.",
+        "Low-ticket quick-service alternatives during off-peak hours."
+      ],
+      defensibility: [
+        "Brand familiarity and signature products can support repeat purchase if loyalty capture is strengthened.",
+        "Peak-hour demand gives room for menu engineering and controlled price tests.",
+        "Local community and student channels can reduce dependence on paid ads."
+      ],
+      watchouts: [
+        "Price-sensitive customers may switch if promotions are not targeted.",
+        "Second-store economics are vulnerable if rent rises faster than repeat traffic.",
+        "Operational consistency must be proven before expanding management span."
+      ]
+    },
+    swotPlus: {
+      strengths: [
+        `Gross margin signal is ${Math.round(grossMargin * 100)}%, giving room for controlled growth experiments.`,
+        "Existing customer segments and marketing channels are clear enough to target campaigns.",
+        "Product-level sales evidence supports menu prioritization instead of guesswork."
+      ],
+      weaknesses: [
+        "Cost leakage cannot be fully isolated without supplier and labor-hour files.",
+        "Off-peak utilization remains a constraint on total store productivity.",
+        "Expansion readiness depends on manager bench strength and lease discipline."
+      ],
+      opportunities: [
+        "Bundle pricing and off-peak offers can increase traffic without major capex.",
+        `The top expansion zone, ${bestZone}, can be tested through localized pre-launch campaigns.`,
+        "Loyalty and CRM capture can raise repeat purchase and reduce promotion waste."
+      ],
+      threats: [
+        "High local competition can compress margins through discounting.",
+        "Labor or ingredient inflation can erode profit if prices are not reviewed weekly.",
+        "A premature second lease could lock in fixed costs before demand is proven."
+      ],
+      towsActions: [
+        "Use signature products to anchor a loyalty campaign before increasing expansion spend.",
+        "Pair menu simplification with off-peak bundles to improve throughput and idle-hour revenue.",
+        "Set rent and payback guardrails before committing to the second-store shortlist."
+      ]
+    },
+    porterFiveForces: {
+      rivalry: { level: "High", note: "Local food and beverage choices compete heavily on convenience, price, reviews, and location." },
+      buyerPower: { level: "Medium", note: "Customers have many substitutes, but brand preference and signature products can reduce switching." },
+      supplierPower: { level: costRatio > 0.72 ? "High" : "Medium", note: "Ingredient and packaging costs need active supplier review to protect margin." },
+      substitutes: { level: "High", note: "Convenience stores, coffee, dessert, fast food, and delivery promotions all compete for the same occasions." },
+      newEntrants: { level: "Medium", note: "Store setup is feasible, but brand trust, operations, and prime locations create some barriers." },
+      overallAttractiveness:
+        readinessScore >= 72
+          ? "Attractive if expansion is staged with strict rent, staffing, and payback gates."
+          : "Promising but not yet attractive for aggressive expansion without stronger profitability controls."
+    },
+    businessModelReview: {
+      revenueEngine: [
+        "Walk-in and takeaway volume during peak hours.",
+        "Delivery and app ordering for convenience-led demand.",
+        "Repeat purchase through loyalty, limited-time offers, and community campaigns."
+      ],
+      costEngine: [
+        "Rent, labor, ingredient, utilities, packaging, and delivery platform fees.",
+        "Waste and low-margin SKUs as the main controllable leakage points.",
+        "Launch marketing and training cost if opening a second branch."
+      ],
+      retentionEngine: [
+        "Mobile loyalty rewards and segmented offers.",
+        "Hero product consistency and seasonal limited editions.",
+        "Google Maps reviews and social proof loops."
+      ],
+      scalabilityConstraints: [
+        "Manager readiness and training quality.",
+        "Supplier consistency across stores.",
+        "Lease economics and payback discipline."
+      ]
+    }
+  };
+}
+
+function mergeStrategicFrameworks(fallback: StrategicFrameworks, value?: Partial<StrategicFrameworks>): StrategicFrameworks {
+  if (!value) return fallback;
+
+  return {
+    dataIntegrity: { ...fallback.dataIntegrity, ...value.dataIntegrity },
+    marketSizing: { ...fallback.marketSizing, ...value.marketSizing },
+    competitivePositioning: { ...fallback.competitivePositioning, ...value.competitivePositioning },
+    swotPlus: { ...fallback.swotPlus, ...value.swotPlus },
+    porterFiveForces: {
+      ...fallback.porterFiveForces,
+      ...value.porterFiveForces,
+      rivalry: { ...fallback.porterFiveForces.rivalry, ...value.porterFiveForces?.rivalry },
+      buyerPower: { ...fallback.porterFiveForces.buyerPower, ...value.porterFiveForces?.buyerPower },
+      supplierPower: { ...fallback.porterFiveForces.supplierPower, ...value.porterFiveForces?.supplierPower },
+      substitutes: { ...fallback.porterFiveForces.substitutes, ...value.porterFiveForces?.substitutes },
+      newEntrants: { ...fallback.porterFiveForces.newEntrants, ...value.porterFiveForces?.newEntrants }
+    },
+    businessModelReview: { ...fallback.businessModelReview, ...value.businessModelReview }
+  };
+}
+
 export function generateSimulatedReport(payload: AnalysisPayload): FinalConsultantReport {
   const currencyCode = inferCurrencyCode(payload);
   const marketContext = getMarketLabel(payload);
@@ -195,6 +349,7 @@ export function generateSimulatedReport(payload: AnalysisPayload): FinalConsulta
       benchmarking: consulting.benchmarking,
       scenarioSimulation: consulting.scenarios
     },
+    strategicFrameworks: createStrategicFrameworks(payload, records, locations[0], costRatio, grossMargin, readiness.score, marketContext),
     keyInsights: [
       "Lunch pricing is under-optimized relative to peak demand.",
       "A small number of products generate the majority of profit.",
@@ -282,6 +437,7 @@ export function normalizeFinalReport(value: Partial<FinalConsultantReport>, fall
     productPerformance: { ...fallback.productPerformance, ...value.productPerformance },
     customerAnalytics: { ...fallback.customerAnalytics, ...value.customerAnalytics },
     consultingAnalysis: { ...fallback.consultingAnalysis, ...value.consultingAnalysis },
+    strategicFrameworks: mergeStrategicFrameworks(fallback.strategicFrameworks, value.strategicFrameworks),
     recommendations: { ...fallback.recommendations, ...value.recommendations },
     marketingStrategy: { ...fallback.marketingStrategy, ...value.marketingStrategy },
     expansionAnalysis: { ...fallback.expansionAnalysis, ...value.expansionAnalysis },

@@ -175,6 +175,154 @@ function TimelineRoadmap({ report }: { report: FinalConsultantReport }) {
   );
 }
 
+function ConfidenceBadge({ level }: { level: string }) {
+  const tone = level === "High" ? "bg-emerald-50 text-emerald-700" : level === "Medium" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700";
+  return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}>{level} confidence</span>;
+}
+
+function ForceLevelBadge({ level }: { level: string }) {
+  const tone = level === "High" ? "bg-red-50 text-red-700" : level === "Medium" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700";
+  return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}>{level} force</span>;
+}
+
+function CompactList({ items, tone = "green" }: { items: string[]; tone?: "green" | "amber" | "red" | "blue" }) {
+  const dotTone = {
+    green: "bg-emerald-500",
+    amber: "bg-amber-500",
+    red: "bg-red-500",
+    blue: "bg-blue-500"
+  }[tone];
+
+  return (
+    <div className="space-y-2">
+      {items.map((item) => (
+        <div key={item} className="flex gap-2 text-sm leading-5 text-ink/72">
+          <span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${dotTone}`} />
+          <span>{item}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StrategicValidation({ report }: { report: FinalConsultantReport }) {
+  const frameworks = report.strategicFrameworks;
+  if (!frameworks) return null;
+
+  const forces = [
+    ["Rivalry", frameworks.porterFiveForces.rivalry],
+    ["Buyer power", frameworks.porterFiveForces.buyerPower],
+    ["Supplier power", frameworks.porterFiveForces.supplierPower],
+    ["Substitutes", frameworks.porterFiveForces.substitutes],
+    ["New entrants", frameworks.porterFiveForces.newEntrants]
+  ] as const;
+
+  return (
+    <section className="mt-5">
+      <Card>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Gauge className="h-5 w-5 text-blue-600" />
+            <h2 className="text-xl font-semibold">Strategic validation</h2>
+          </div>
+          <ConfidenceBadge level={frameworks.dataIntegrity.confidenceLevel} />
+        </div>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
+          <div className="rounded-lg border border-blue-500/20 bg-blue-50 p-4">
+            <p className="text-xs font-semibold uppercase text-blue-700">Data reliability</p>
+            <div className="mt-3 flex items-end gap-3">
+              <p className="text-4xl font-semibold text-ink">{Math.round(frameworks.dataIntegrity.reliabilityScore)}</p>
+              <p className="pb-1 text-sm text-ink/60">/100</p>
+            </div>
+            <div className="mt-3 h-2 rounded-full bg-white">
+              <div className="h-2 rounded-full bg-blue-600" style={{ width: `${Math.max(0, Math.min(100, frameworks.dataIntegrity.reliabilityScore))}%` }} />
+            </div>
+            <div className="mt-4">
+              <p className="text-sm font-semibold text-ink">Assumption checks</p>
+              <div className="mt-2">
+                <CompactList items={frameworks.dataIntegrity.assumptionChecks} tone="blue" />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-lg border border-ink/10 bg-paper p-4">
+              <p className="text-xs font-semibold uppercase text-ink/50">TAM</p>
+              <p className="mt-2 text-sm leading-5 text-ink/72">{frameworks.marketSizing.tam}</p>
+            </div>
+            <div className="rounded-lg border border-ink/10 bg-paper p-4">
+              <p className="text-xs font-semibold uppercase text-ink/50">SAM</p>
+              <p className="mt-2 text-sm leading-5 text-ink/72">{frameworks.marketSizing.sam}</p>
+            </div>
+            <div className="rounded-lg border border-ink/10 bg-paper p-4">
+              <p className="text-xs font-semibold uppercase text-ink/50">SOM</p>
+              <p className="mt-2 text-sm leading-5 text-ink/72">{frameworks.marketSizing.som}</p>
+            </div>
+            <p className="rounded-lg border border-amber-500/25 bg-amber-50 p-3 text-sm leading-5 text-amber-800 md:col-span-3">
+              {frameworks.marketSizing.methodNote}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-4 xl:grid-cols-3">
+          <div className="rounded-lg border border-ink/10 bg-white p-4">
+            <p className="font-semibold text-ink">Competitive positioning</p>
+            <div className="mt-3">
+              <CompactList items={frameworks.competitivePositioning.directAlternatives} tone="red" />
+            </div>
+            <p className="mt-4 text-sm font-semibold text-ink">Defensibility</p>
+            <div className="mt-2">
+              <CompactList items={frameworks.competitivePositioning.defensibility} />
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-ink/10 bg-white p-4">
+            <p className="font-semibold text-ink">Porter five forces</p>
+            <div className="mt-3 space-y-2">
+              {forces.map(([label, force]) => (
+                <div key={label} className="rounded-md bg-paper p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-ink">{label}</p>
+                    <ForceLevelBadge level={force.level} />
+                  </div>
+                  <p className="mt-1 text-sm leading-5 text-ink/66">{force.note}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 rounded-md bg-mint p-3 text-sm leading-5 text-fern">{frameworks.porterFiveForces.overallAttractiveness}</p>
+          </div>
+
+          <div className="rounded-lg border border-ink/10 bg-white p-4">
+            <p className="font-semibold text-ink">Business model review</p>
+            <p className="mt-3 text-sm font-semibold text-ink">Revenue engine</p>
+            <CompactList items={frameworks.businessModelReview.revenueEngine} tone="blue" />
+            <p className="mt-3 text-sm font-semibold text-ink">Scalability constraints</p>
+            <CompactList items={frameworks.businessModelReview.scalabilityConstraints} tone="amber" />
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-lg border border-emerald-500/20 bg-emerald-50 p-4">
+            <p className="font-semibold text-emerald-800">SWOT+ strengths and opportunities</p>
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <CompactList items={frameworks.swotPlus.strengths} />
+              <CompactList items={frameworks.swotPlus.opportunities} tone="blue" />
+            </div>
+          </div>
+          <div className="rounded-lg border border-red-500/20 bg-red-50 p-4">
+            <p className="font-semibold text-red-800">Risks and TOWS actions</p>
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <CompactList items={[...frameworks.swotPlus.weaknesses, ...frameworks.swotPlus.threats].slice(0, 4)} tone="red" />
+              <CompactList items={frameworks.swotPlus.towsActions} tone="amber" />
+            </div>
+          </div>
+        </div>
+      </Card>
+    </section>
+  );
+}
+
 function resolveReportImagePath(imagePath?: string) {
   if (!imagePath) return "/kitsune-moodboard.png";
   if (imagePath.startsWith("/")) return imagePath;
@@ -414,6 +562,8 @@ export default function ReportPage() {
             </Card>
           </section>
         ) : null}
+
+        <StrategicValidation report={report} />
 
         <section className="mt-5 grid gap-5 xl:grid-cols-3">
           <Card>

@@ -208,6 +208,56 @@ export type ScoreBreakdown = {
   growthPotential: number;
 };
 
+export type ConfidenceLevel = "Low" | "Medium" | "High";
+
+export type ForceAssessment = {
+  level: ConfidenceLevel;
+  note: string;
+};
+
+export type StrategicFrameworks = {
+  dataIntegrity: {
+    confidenceLevel: ConfidenceLevel;
+    reliabilityScore: number;
+    evidenceUsed: string[];
+    assumptionChecks: string[];
+    missingEvidence: string[];
+  };
+  marketSizing: {
+    tam: string;
+    sam: string;
+    som: string;
+    confidenceLevel: ConfidenceLevel;
+    methodNote: string;
+  };
+  competitivePositioning: {
+    directAlternatives: string[];
+    defensibility: string[];
+    watchouts: string[];
+  };
+  swotPlus: {
+    strengths: string[];
+    weaknesses: string[];
+    opportunities: string[];
+    threats: string[];
+    towsActions: string[];
+  };
+  porterFiveForces: {
+    rivalry: ForceAssessment;
+    buyerPower: ForceAssessment;
+    supplierPower: ForceAssessment;
+    substitutes: ForceAssessment;
+    newEntrants: ForceAssessment;
+    overallAttractiveness: string;
+  };
+  businessModelReview: {
+    revenueEngine: string[];
+    costEngine: string[];
+    retentionEngine: string[];
+    scalabilityConstraints: string[];
+  };
+};
+
 export type PriorityHighlightKey =
   | "keyInsights"
   | "problemDiagnosis"
@@ -277,6 +327,7 @@ export type FinalConsultantReport = {
     benchmarking: string[];
     scenarioSimulation: string[];
   };
+  strategicFrameworks: StrategicFrameworks;
   keyInsights: string[];
   problemDiagnosis: string[];
   priorityHighlights?: PriorityHighlights;
