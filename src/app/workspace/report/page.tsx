@@ -121,7 +121,7 @@ function rankAnalysisItems(items: string[], section: string) {
       score: impactScore + positionScore
     };
   });
-  const priorityCount = items.length > 3 ? 3 : Math.max(1, items.length - 1);
+  const priorityCount = items.length > 0 ? 1 : 0;
   const priorityIndexes = new Set(
     scoredItems
       .slice()
@@ -151,7 +151,7 @@ function PriorityList({ items, section }: { items: string[]; section: string }) 
             <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${important ? "text-clay" : "text-emerald-600"}`} aria-hidden="true" />
             <div>
               <span className={`mb-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${important ? "bg-white text-clay" : "bg-white text-emerald-700"}`}>
-                {important ? "Priority" : "Supporting"}
+                {important ? "Top priority" : "Supporting"}
               </span>
               <p>{item}</p>
             </div>
