@@ -51,7 +51,7 @@ Vercel is the simplest production target for this app because it supports Next.j
 1. Push the repository to GitHub.
 2. Open Vercel Dashboard.
 3. Select `Add New...` -> `Project`.
-4. Import `zjmdong/HKU_AI-in-Business_A`.
+4. Import `zjmdong/Kitsune_Project`.
 5. Framework preset: `Next.js`.
 6. Build command: keep default, or use `pnpm build` / `npm run build`.
 7. Add environment variables:
