@@ -87,6 +87,8 @@ flowchart LR
 
 ## 本地运行
 
+公开的生产部署默认**仅展示落地页**：工作台跳转至带有 GitHub 链接的维护提示页，分析接口关闭。完整功能 Demo 可在本地运行，配置见[公开展示模式](DEPLOYMENT.md#public-showcase-default)。
+
 准备 **Node.js 22** 和 **pnpm**。
 
 ```bash

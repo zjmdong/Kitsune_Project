@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createMockConsultantReport } from "@/lib/report";
+import { showcaseUnavailableResponse } from "@/lib/showcase";
 import type { AnalysisResult, BusinessProfile, ConsultantReport, LocationRecommendation } from "@/lib/types";
 
 type RequestBody = {
@@ -110,6 +111,9 @@ ${JSON.stringify(compactPayload, null, 2)}`;
 }
 
 export async function POST(request: Request) {
+  const unavailable = showcaseUnavailableResponse();
+  if (unavailable) return unavailable;
+
   const body = (await request.json()) as RequestBody;
   const live = await createLiveReport(body);
   const report = live ?? createMockConsultantReport(body.profile, body.analysis, body.locations);

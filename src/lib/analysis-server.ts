@@ -1,5 +1,6 @@
 import { analysisWorkflow, buildAnalysisPrompt, extractJson, promptVersion } from "./analysis-prompt";
 import { generateSimulatedReport, normalizeFinalReport } from "./simulation";
+import { isShowcaseOnly, showcaseMessage } from "./showcase";
 import type { AnalysisPayload, FinalConsultantReport, LoadingStep } from "./types";
 
 const defaultEndpoint = "https://opencode.ai/zen/go/v1/chat/completions";
@@ -399,6 +400,8 @@ export async function runRealAnalysis(
   payload: AnalysisPayload,
   onEvent?: (event: AnalysisProgressEvent) => void
 ): Promise<FinalConsultantReport> {
+  if (isShowcaseOnly()) throw new Error(showcaseMessage);
+
   const { provider, apiKey, endpoint, model } = configFromPayload(payload);
   if (!apiKey) {
     throw new Error("Real LLM mode requires an API key. Configure it in .env.local or the advanced settings panel.");

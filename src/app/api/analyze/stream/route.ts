@@ -1,5 +1,6 @@
 import { runRealAnalysis } from "@/lib/analysis-server";
 import { generateSimulatedReport } from "@/lib/simulation";
+import { showcaseUnavailableResponse } from "@/lib/showcase";
 import type { AnalysisPayload, LoadingStep } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -10,6 +11,9 @@ function encodeEvent(event: unknown) {
 }
 
 export async function POST(request: Request) {
+  const unavailable = showcaseUnavailableResponse();
+  if (unavailable) return unavailable;
+
   const payload = (await request.json()) as AnalysisPayload;
 
   const stream = new ReadableStream({

@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { runRealAnalysis } from "@/lib/analysis-server";
 import { generateSimulatedReport } from "@/lib/simulation";
+import { showcaseUnavailableResponse } from "@/lib/showcase";
 import type { AnalysisPayload } from "@/lib/types";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  const unavailable = showcaseUnavailableResponse();
+  if (unavailable) return unavailable;
+
   const payload = (await request.json()) as AnalysisPayload;
 
   if (payload.mode === "template") {

@@ -87,6 +87,8 @@ flowchart LR
 
 ## Quick Start
 
+Public production deployments are **landing-page showcases**: the workspace redirects to a maintenance page with a GitHub link, and analysis APIs are disabled. Run locally to explore the functional demo. See [showcase configuration](DEPLOYMENT.md#public-showcase-default).
+
 Use **Node.js 22** and **pnpm**.
 
 ```bash
